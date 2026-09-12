@@ -46,8 +46,8 @@ Or use stable subpath exports so applications only depend on the layer they need
 
 ```ts
 import { buildCandidate } from "@haytamaroui/pronunciation-lab/core";
-import { AzureSpeechProvider } from "@haytamaroui/pronunciation-lab/azure";
-import { EdgeTtsProvider } from "@haytamaroui/pronunciation-lab/edge";
+import { AzureSpeechAdapter } from "@haytamaroui/pronunciation-lab/azure";
+import { EdgeTtsAdapter } from "@haytamaroui/pronunciation-lab/edge";
 import { createBlindSession } from "@haytamaroui/pronunciation-lab/review";
 import { createMicrosoftComparisonMatrix } from "@haytamaroui/pronunciation-lab/experiment";
 import { selectCandidate } from "@haytamaroui/pronunciation-lab/policy";
@@ -89,14 +89,17 @@ The project is intentionally application-neutral. Speech-practice products, lang
 | Capability | Azure Speech | Edge TTS |
 | --- | ---: | ---: |
 | Provider-default pronunciation | yes | yes |
-| Rate control | yes | yes |
-| Pitch control | yes | yes |
+| Rate control | yes, percent | yes, percent |
+| Generic package pitch control | yes, percent | neutral only (`0%` -> CLI `+0Hz`) |
+| Native provider pitch control | provider SSML | Edge CLI uses Hz; non-zero generic percent pitch fails closed |
 | Inline IPA planning | yes | no |
 | Reviewed provider mapping | yes | no |
 | Provider lexicon planning | yes | no |
 | Official provider API path | yes | no — optional local `edge-tts` CLI integration |
 
-Edge is deliberately modeled as a **default/prosody renderer**, not as an IPA renderer. Azure exposes richer pronunciation controls through its official Speech API. A consuming application can also compare or ingest human recordings as independent evidence without letting them redefine the canonical target.
+Edge is deliberately modeled as a **default/prosody renderer**, not as an IPA renderer. The generic renderer currently represents pitch as a percentage, while the `edge-tts` CLI represents pitch as a frequency offset in Hz. Pronunciation Lab therefore maps only neutral generic pitch (`0%`) to `+0Hz` and rejects non-zero generic percent pitch rather than silently changing units. A future provider-specific Edge option can expose native Hz pitch explicitly.
+
+Azure exposes richer pronunciation controls through its official Speech API. A consuming application can also compare or ingest human recordings as independent evidence without letting them redefine the canonical target.
 
 ## Repository layout
 
