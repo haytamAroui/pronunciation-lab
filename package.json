@@ -17,10 +17,11 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test tests/*.test.ts",
-    "check": "npm run typecheck && npm test"
+    "example": "tsx examples/provider-comparison.ts",
+    "check": "npm run typecheck && npm test && npm run build"
   },
   "engines": {
     "node": ">=22"
