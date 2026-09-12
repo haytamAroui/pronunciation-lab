@@ -1,15 +1,40 @@
 {
-  "name": "pronunciation-lab",
+  "name": "@haytamaroui/pronunciation-lab",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "Provider-neutral pronunciation rendering, benchmarking, blind review, and evidence tooling.",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./azure": {
+      "types": "./dist/providers/azure/index.d.ts",
+      "import": "./dist/providers/azure/index.js"
+    },
+    "./edge": {
+      "types": "./dist/providers/edge/index.d.ts",
+      "import": "./dist/providers/edge/index.js"
+    },
+    "./review": {
+      "types": "./dist/review/index.d.ts",
+      "import": "./dist/review/index.js"
+    },
+    "./experiment": {
+      "types": "./dist/experiment/index.d.ts",
+      "import": "./dist/experiment/index.js"
+    },
+    "./policy": {
+      "types": "./dist/policy/index.d.ts",
+      "import": "./dist/policy/index.js"
     }
   },
   "files": [
@@ -21,10 +46,21 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "example": "tsx examples/provider-comparison.ts",
-    "check": "npm run typecheck && npm test && npm run build"
+    "check": "npm run typecheck && npm test && npm run build",
+    "pack:check": "npm pack --dry-run",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run check"
   },
   "engines": {
     "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haytamAroui/pronunciation-lab.git"
+  },
+  "homepage": "https://github.com/haytamAroui/pronunciation-lab#readme",
+  "bugs": {
+    "url": "https://github.com/haytamAroui/pronunciation-lab/issues"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
