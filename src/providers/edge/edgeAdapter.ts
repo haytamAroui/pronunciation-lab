@@ -9,7 +9,11 @@ export const EDGE_CAPABILITIES: ProviderCapabilities = Object.freeze({
   providerId: "edge_tts",
   providerDefault: true,
   rateControl: true,
-  pitchControl: true,
+  // The package-level renderer models pitch in percent, while the edge-tts CLI
+  // accepts pitch in Hz. Until the generic model represents pitch units
+  // explicitly, non-zero pitch control must fail closed rather than silently
+  // reinterpreting a percentage as a frequency offset.
+  pitchControl: false,
   inlineAlphabets: Object.freeze([]),
   reviewedProviderMapping: false,
   providerLexicon: false,
@@ -37,6 +41,9 @@ export class EdgeTtsAdapter implements PronunciationProviderAdapter {
     if (renderer.pronunciation.mode !== "provider_default") {
       throw new Error("EDGE_PRONUNCIATION_OVERRIDE_UNSUPPORTED");
     }
+    if (renderer.pitchPercent !== 0) {
+      throw new Error("EDGE_PITCH_PERCENT_UNSUPPORTED_USE_NATIVE_HZ_ADAPTER");
+    }
 
     const outputFormat = renderer.outputFormat ?? "audio-24khz-48kbitrate-mono-mp3";
     if (!this.capabilities.supportedOutputFormats.includes(outputFormat)) {
@@ -61,7 +68,7 @@ export class EdgeTtsAdapter implements PronunciationProviderAdapter {
           "--rate",
           signedPercent(renderer.ratePercent),
           "--pitch",
-          signedPercent(renderer.pitchPercent),
+          "+0Hz",
         ]),
       }),
     });
