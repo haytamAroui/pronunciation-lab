@@ -35,7 +35,7 @@ describe("provider capability boundaries", () => {
     assert.match(String(plan.payload), /<phoneme alphabet="ipa" ph="sɔk">sok<\/phoneme>/u);
   });
 
-  it("accepts Edge provider-default rendering", () => {
+  it("accepts Edge provider-default rendering and emits CLI-native pitch units", () => {
     const candidate = buildCandidate({
       target,
       renderer: {
@@ -49,6 +49,27 @@ describe("provider capability boundaries", () => {
     });
     const plan = new EdgeTtsAdapter().plan({ target, candidate });
     assert.equal(plan.providerId, "edge_tts");
+    const payload = plan.payload as { executable: string; args: readonly string[] };
+    assert.equal(payload.executable, "edge-tts");
+    assert.deepEqual(payload.args.slice(-4), ["--rate", "+0%", "--pitch", "+0Hz"]);
+  });
+
+  it("fails closed when generic percent pitch is non-zero for Edge", () => {
+    const candidate = buildCandidate({
+      target,
+      renderer: {
+        kind: "tts",
+        provider: "edge_tts",
+        voiceId: "nl-BE-DenaNeural",
+        pronunciation: { mode: "provider_default" },
+        ratePercent: 0,
+        pitchPercent: 5,
+      },
+    });
+    assert.throws(
+      () => new EdgeTtsAdapter().plan({ target, candidate }),
+      /EDGE_PITCH_PERCENT_UNSUPPORTED_USE_NATIVE_HZ_ADAPTER/u,
+    );
   });
 
   it("fails closed when Edge is asked to render IPA", () => {
