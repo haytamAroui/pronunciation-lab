@@ -1,8 +1,57 @@
 # Pronunciation Lab
 
-Provider-neutral pronunciation rendering, benchmarking, and evidence tooling.
+Provider-neutral pronunciation rendering, benchmarking, blind review, and evidence tooling.
 
 Pronunciation Lab sits **above** speech-synthesis providers. It keeps linguistic targets independent from any provider, plans comparable render candidates, fingerprints exact configurations and artifacts, blinds candidates for human evaluation, and records evidence without allowing a synthesis provider or CI job to grant linguistic or clinical authority.
+
+## Package status
+
+The repository is now structured as the npm package:
+
+```text
+@haytamaroui/pronunciation-lab
+```
+
+It is **npm-ready but not published to the public npm registry yet**. The GitHub repository remains the source of truth.
+
+For an authenticated private-GitHub environment, another project can install it directly from this repository:
+
+```bash
+npm install github:haytamAroui/pronunciation-lab
+```
+
+The package has a `prepare` hook, so Git installs compile `src/` into `dist/` automatically.
+
+When a tagged release is created, consumers should pin it instead of following `main`, for example:
+
+```bash
+npm install github:haytamAroui/pronunciation-lab#v0.1.0
+```
+
+A later public-registry release can use the same package name without changing consumer imports.
+
+## Imports
+
+Use the root package when broad access is convenient:
+
+```ts
+import {
+  buildCandidate,
+  createBlindSession,
+  createMicrosoftComparisonMatrix,
+} from "@haytamaroui/pronunciation-lab";
+```
+
+Or use stable subpath exports so applications only depend on the layer they need:
+
+```ts
+import { buildCandidate } from "@haytamaroui/pronunciation-lab/core";
+import { AzureSpeechProvider } from "@haytamaroui/pronunciation-lab/azure";
+import { EdgeTtsProvider } from "@haytamaroui/pronunciation-lab/edge";
+import { createBlindSession } from "@haytamaroui/pronunciation-lab/review";
+import { createMicrosoftComparisonMatrix } from "@haytamaroui/pronunciation-lab/experiment";
+import { selectCandidate } from "@haytamaroui/pronunciation-lab/policy";
+```
 
 ## Why this exists
 
@@ -23,7 +72,7 @@ canonical pronunciation target
   -> evidence-backed decision
 ```
 
-The project is intentionally application-neutral. Speech-therapy products, language-learning apps, dictionaries, accessibility pipelines, education tools, and research projects can define their own release policy on top.
+The project is intentionally application-neutral. Speech-practice products, language-learning apps, dictionaries, accessibility pipelines, education tools, and research projects can define their own release policy on top.
 
 ## Core rules
 
@@ -37,29 +86,29 @@ The project is intentionally application-neutral. Speech-therapy products, langu
 
 ## Initial provider model
 
-| Capability | Azure Speech | Edge TTS | Human recording |
-| --- | ---: | ---: | ---: |
-| Provider-default pronunciation | yes | yes | n/a |
-| Rate control | yes | yes | n/a |
-| Pitch control | yes | yes | n/a |
-| Inline IPA planning | yes | no | n/a |
-| Reviewed provider mapping | yes | no | n/a |
-| Provider lexicon planning | yes | no | n/a |
-| Recording ingestion | no | no | yes |
+| Capability | Azure Speech | Edge TTS |
+| --- | ---: | ---: |
+| Provider-default pronunciation | yes | yes |
+| Rate control | yes | yes |
+| Pitch control | yes | yes |
+| Inline IPA planning | yes | no |
+| Reviewed provider mapping | yes | no |
+| Provider lexicon planning | yes | no |
+| Official provider API path | yes | no — optional local `edge-tts` CLI integration |
 
-Edge is deliberately modeled as a **default/prosody renderer**, not as an IPA renderer. Azure can expose richer pronunciation controls through its official Speech API. Human recordings remain a separate candidate class.
+Edge is deliberately modeled as a **default/prosody renderer**, not as an IPA renderer. Azure exposes richer pronunciation controls through its official Speech API. A consuming application can also compare or ingest human recordings as independent evidence without letting them redefine the canonical target.
 
 ## Repository layout
 
 ```text
 src/
-  core/                 canonical targets, candidates, fingerprints
-  providers/            provider contracts and adapters
-    azure/
-    edge/
-    human/
-  review/               blind sessions and evidence
-  policy/               generic evidence-based selection
+  core/                 canonical targets, candidates, fingerprints, artifacts
+  providers/
+    azure/               Azure planning + official REST materialization
+    edge/                Edge capability model + optional local CLI materialization
+  experiment/            reusable comparison matrices
+  review/                blind sessions and review evidence
+  policy/                generic evidence-based selection
   index.ts
 
 examples/
@@ -75,7 +124,7 @@ import {
   buildCandidate,
   createBlindSession,
   type CanonicalPronunciationTarget,
-} from "pronunciation-lab";
+} from "@haytamaroui/pronunciation-lab";
 
 const target: CanonicalPronunciationTarget = {
   targetId: "demo:nl-BE:sok",
@@ -92,7 +141,11 @@ const candidate = buildCandidate({
     kind: "tts",
     provider: "azure_speech",
     voiceId: "nl-BE-DenaNeural",
-    pronunciation: { mode: "canonical_ipa", phoneString: "sɔk", alphabet: "ipa" },
+    pronunciation: {
+      mode: "canonical_ipa",
+      phoneString: "sɔk",
+      alphabet: "ipa",
+    },
     ratePercent: -8,
     pitchPercent: 0,
   },
@@ -108,7 +161,7 @@ const session = createBlindSession({
 ## Intended experiment flow
 
 ```text
-1. application exports canonical targets
+1. consuming application exports canonical targets
 2. Pronunciation Lab plans candidates
 3. provider adapters materialize candidate audio
 4. artifact hashes bind exact output to exact candidate identity
@@ -118,10 +171,39 @@ const session = createBlindSession({
 8. consuming application decides whether and how to promote that evidence
 ```
 
+## Development
+
+```bash
+npm install
+npm run typecheck
+npm test
+npm run build
+npm run pack:check
+npm run example
+```
+
+`npm run pack:check` validates the files and metadata that would be included in an npm package without publishing anything.
+
+## Publishing boundary
+
+The package is currently versioned `0.1.0` and remains `UNLICENSED`. That is deliberate: no public open-source license has been chosen yet.
+
+Before a public npm release, decide the license and confirm ownership of the npm scope `@haytamaroui`. Public publication should be an explicit release action, not an automatic consequence of CI.
+
 ## Scope boundary
 
 Pronunciation Lab does **not** diagnose speech disorders, select treatment, infer phonemes from spelling, or decide that audio is clinically safe. It supplies provider-neutral rendering and review evidence. The consuming application owns linguistic authoring, reviewer qualifications, clinical policy, and release decisions.
 
-## Status
+## SoundSteps boundary
 
-Initial extraction from concepts proven in SoundSteps. The standalone repository intentionally removes SoundSteps curriculum, child-runtime, module, and release-policy dependencies.
+SoundSteps can consume this package, but Pronunciation Lab must not import SoundSteps curriculum, child runtime, 53-module catalog, practice-road, or child-release concepts.
+
+```text
+SoundSteps
+    -> @haytamaroui/pronunciation-lab
+
+@haytamaroui/pronunciation-lab
+    -/-> SoundSteps
+```
+
+This keeps the pronunciation engine reusable by other projects.
