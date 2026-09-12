@@ -1,5 +1,8 @@
 import type { BlindReviewSession } from "../review/blindSession.js";
-import type { CandidateReviewEvidence } from "../review/evidence.js";
+import {
+  validateReviewEvidence,
+  type CandidateReviewEvidence,
+} from "../review/evidence.js";
 
 export type CandidateDisposition =
   | "preferred_candidate"
@@ -33,9 +36,14 @@ export function selectCandidate(input: {
 }): CandidateSelectionResult {
   const policy = input.policy ?? DEFAULT_SELECTION_POLICY;
   const evidenceByCandidate = new Map<string, CandidateReviewEvidence[]>();
+  const invalidEvidenceIds = new Set<string>();
 
   for (const item of input.evidence) {
     if (item.sessionId !== input.session.sessionId) continue;
+    if (validateReviewEvidence(item).length > 0) {
+      invalidEvidenceIds.add(item.evidenceId);
+      continue;
+    }
     const assignment = input.session.assignments.find((candidate) => candidate.blindLabel === item.blindLabel);
     if (!assignment) continue;
     const list = evidenceByCandidate.get(assignment.candidateId) ?? [];
@@ -43,20 +51,42 @@ export function selectCandidate(input: {
     evidenceByCandidate.set(assignment.candidateId, list);
   }
 
+  if (invalidEvidenceIds.size > 0) {
+    return Object.freeze({
+      disposition: "insufficient_evidence",
+      candidateId: null,
+      evidenceIds: Object.freeze([...invalidEvidenceIds]),
+      reason: "One or more review evidence records are invalid and cannot establish a selection decision.",
+    });
+  }
+
   const passed: { candidateId: string; evidence: CandidateReviewEvidence[] }[] = [];
   let allCandidatesFullyReviewed = true;
 
   for (const assignment of input.session.assignments) {
     const reviews = evidenceByCandidate.get(assignment.candidateId) ?? [];
-    const roles = new Set(reviews.map((review) => review.reviewerRole));
-    const hasRequiredRoles = policy.requiredReviewerRoles.every((role) => roles.has(role));
-    if (!hasRequiredRoles) allCandidatesFullyReviewed = false;
+    const conclusiveRoles = new Set(
+      reviews
+        .filter((review) => review.overallDecision !== "abstain")
+        .map((review) => review.reviewerRole),
+    );
+    const hasConclusiveRequiredRoles = policy.requiredReviewerRoles.every((role) =>
+      conclusiveRoles.has(role),
+    );
+    if (!hasConclusiveRequiredRoles) allCandidatesFullyReviewed = false;
 
-    const criticalOk = !policy.requireNoCriticalFlags || reviews.every((review) => review.criticalFlags.length === 0);
+    const criticalOk =
+      !policy.requireNoCriticalFlags ||
+      reviews.every((review) => review.criticalFlags.length === 0);
     const passCount = reviews.filter((review) => review.overallDecision === "pass").length;
     const hasFail = reviews.some((review) => review.overallDecision === "fail");
 
-    if (hasRequiredRoles && criticalOk && !hasFail && passCount >= policy.minimumOverallPasses) {
+    if (
+      hasConclusiveRequiredRoles &&
+      criticalOk &&
+      !hasFail &&
+      passCount >= policy.minimumOverallPasses
+    ) {
       passed.push({ candidateId: assignment.candidateId, evidence: reviews });
     }
   }
@@ -74,7 +104,9 @@ export function selectCandidate(input: {
     return Object.freeze({
       disposition: "insufficient_evidence",
       candidateId: null,
-      evidenceIds: Object.freeze(passed.flatMap((item) => item.evidence.map((review) => review.evidenceId))),
+      evidenceIds: Object.freeze(
+        passed.flatMap((item) => item.evidence.map((review) => review.evidenceId)),
+      ),
       reason: "Multiple candidates satisfy the gate; ranking requires an application-specific preference policy.",
     });
   }
@@ -84,7 +116,7 @@ export function selectCandidate(input: {
       disposition: "insufficient_evidence",
       candidateId: null,
       evidenceIds: Object.freeze(input.evidence.map((item) => item.evidenceId)),
-      reason: "Not every candidate has evidence from all required reviewer roles.",
+      reason: "Not every candidate has conclusive evidence from all required reviewer roles.",
     });
   }
 
