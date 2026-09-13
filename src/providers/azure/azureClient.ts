@@ -29,10 +29,12 @@ export async function materializeAzureSpeech(
 
   const region = validateRegion(options.region);
   const endpoint = `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`;
+  const validationRefs = plan.validationRefs ?? Object.freeze([]);
   const requestFingerprint = fingerprint({
     endpoint,
     outputFormat: plan.outputFormat,
     ssml: plan.payload,
+    validationRefs,
   });
 
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -60,6 +62,7 @@ export async function materializeAzureSpeech(
       httpStatus: response.status,
       outputFormat: plan.outputFormat,
       region,
+      ...(validationRefs.length > 0 ? { validationRefs: validationRefs.join(",") } : {}),
     }),
   });
 }
