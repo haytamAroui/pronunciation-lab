@@ -2,11 +2,36 @@ import { fingerprint } from "./fingerprint.js";
 import type {
   CanonicalPronunciationTarget,
   PronunciationCandidate,
+  PronunciationInstruction,
+  PronunciationSpan,
   RendererSpec,
 } from "./model.js";
 
 function assertNonEmpty(value: string, label: string): void {
   if (!value.trim()) throw new Error(`${label} is required`);
+}
+
+function validateSpans(spans: readonly PronunciationSpan[], prefix: string): string[] {
+  const issues: string[] = [];
+  if (spans.length === 0) issues.push(`${prefix}_EMPTY`);
+  for (const span of spans) {
+    if (!span.text.normalize("NFC").trim()) issues.push(`${prefix}_TEXT_MISSING`);
+    if (!span.phoneString.trim()) issues.push(`${prefix}_PHONE_STRING_MISSING`);
+  }
+  return issues;
+}
+
+function freezePronunciation(pronunciation: PronunciationInstruction): PronunciationInstruction {
+  if (
+    (pronunciation.mode === "canonical_ipa" || pronunciation.mode === "reviewed_provider_mapping") &&
+    pronunciation.spans
+  ) {
+    return Object.freeze({
+      ...pronunciation,
+      spans: Object.freeze(pronunciation.spans.map((span) => Object.freeze({ ...span }))),
+    });
+  }
+  return Object.freeze({ ...pronunciation });
 }
 
 export function validateCanonicalTarget(target: CanonicalPronunciationTarget): readonly string[] {
@@ -16,6 +41,9 @@ export function validateCanonicalTarget(target: CanonicalPronunciationTarget): r
   if (!target.text.normalize("NFC").trim()) issues.push("TARGET_TEXT_MISSING");
   if (target.canonicalIpa !== null && !target.canonicalIpa.trim()) {
     issues.push("TARGET_CANONICAL_IPA_EMPTY");
+  }
+  if (target.canonicalPronunciationSpans) {
+    issues.push(...validateSpans(target.canonicalPronunciationSpans, "TARGET_PRONUNCIATION_SPANS"));
   }
   return Object.freeze(issues);
 }
@@ -35,11 +63,12 @@ export function validateRenderer(renderer: RendererSpec): readonly string[] {
   if (!Number.isFinite(renderer.pitchPercent)) issues.push("PITCH_INVALID");
 
   const pronunciation = renderer.pronunciation;
-  if (
-    (pronunciation.mode === "canonical_ipa" || pronunciation.mode === "reviewed_provider_mapping") &&
-    !pronunciation.phoneString.trim()
-  ) {
-    issues.push("PHONE_STRING_MISSING");
+  if (pronunciation.mode === "canonical_ipa" || pronunciation.mode === "reviewed_provider_mapping") {
+    const hasPhoneString = Boolean(pronunciation.phoneString?.trim());
+    const hasSpans = pronunciation.spans !== undefined;
+    if (!hasPhoneString && !hasSpans) issues.push("INLINE_PRONUNCIATION_MISSING");
+    if (hasPhoneString && hasSpans) issues.push("INLINE_PRONUNCIATION_AMBIGUOUS");
+    if (pronunciation.spans) issues.push(...validateSpans(pronunciation.spans, "INLINE_PRONUNCIATION_SPANS"));
   }
   if (pronunciation.mode === "reviewed_provider_mapping" && !pronunciation.evidenceRef?.trim()) {
     issues.push("REVIEWED_MAPPING_EVIDENCE_MISSING");
@@ -66,12 +95,35 @@ export function buildCandidate(input: {
     renderer: input.renderer,
   });
 
+  const target = Object.freeze({
+    ...input.target,
+    ...(input.target.canonicalPronunciationSpans
+      ? {
+          canonicalPronunciationSpans: Object.freeze(
+            input.target.canonicalPronunciationSpans.map((span) => Object.freeze({ ...span })),
+          ),
+        }
+      : {}),
+    metadata: Object.freeze({ ...input.target.metadata }),
+  });
+
+  const renderer =
+    input.renderer.kind === "tts"
+      ? Object.freeze({
+          ...input.renderer,
+          pronunciation: freezePronunciation(input.renderer.pronunciation),
+          ...(input.renderer.providerOptions
+            ? { providerOptions: Object.freeze({ ...input.renderer.providerOptions }) }
+            : {}),
+        })
+      : Object.freeze({ ...input.renderer });
+
   return Object.freeze({
     schemaVersion: "1.0.0",
     candidateId: `candidate:${candidateFingerprint.slice("sha256:".length)}`,
     candidateFingerprint,
-    target: Object.freeze({ ...input.target, metadata: Object.freeze({ ...input.target.metadata }) }),
-    renderer: Object.freeze({ ...input.renderer }) as RendererSpec,
+    target,
+    renderer: renderer as RendererSpec,
     authority: "experiment_only",
   });
 }
