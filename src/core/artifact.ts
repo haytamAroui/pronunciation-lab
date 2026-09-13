@@ -7,8 +7,8 @@ function computeArtifactFingerprint(input: {
   audioSha256: string;
   mediaType: string;
   byteLength: number;
-  providerRequestFingerprint?: string;
-  providerResponseMetadata?: Readonly<Record<string, string | number | boolean | null>>;
+  providerRequestFingerprint?: string | undefined;
+  providerResponseMetadata?: Readonly<Record<string, string | number | boolean | null>> | undefined;
 }): string {
   return fingerprint({
     candidateId: input.candidateId,
