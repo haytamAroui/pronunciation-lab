@@ -5,11 +5,23 @@ export type PronunciationRole =
   | "instructional_narration"
   | "custom";
 
+export interface PronunciationSpan {
+  /** Exact authored grapheme token represented by this pronunciation span. */
+  text: string;
+  /** Provider-facing phone string for this span only. */
+  phoneString: string;
+}
+
 export interface CanonicalPronunciationTarget {
   targetId: string;
   locale: string;
   text: string;
   canonicalIpa: string | null;
+  /**
+   * Explicit authored token-level IPA for multi-word targets.
+   * Pronunciation Lab never derives these spans from spelling or whitespace.
+   */
+  canonicalPronunciationSpans?: readonly PronunciationSpan[];
   role: PronunciationRole;
   metadata: Readonly<Record<string, string | number | boolean | null>>;
 }
@@ -29,7 +41,10 @@ export interface ProviderDefaultPronunciation {
 export interface InlinePronunciation {
   mode: "canonical_ipa" | "reviewed_provider_mapping";
   alphabet: PhoneticAlphabet;
-  phoneString: string;
+  /** Legacy/single-span form. Multi-word targets must use spans. */
+  phoneString?: string;
+  /** Explicit authored per-token pronunciation. No alignment inference is performed. */
+  spans?: readonly PronunciationSpan[];
   evidenceRef?: string;
 }
 
