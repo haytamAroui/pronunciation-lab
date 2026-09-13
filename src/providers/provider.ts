@@ -25,6 +25,8 @@ export interface ProviderRenderPlan {
   pitchPercent: number;
   outputFormat: string;
   payload: string | Readonly<Record<string, unknown>>;
+  /** Versioned validation inputs that materially affected whether this plan was accepted. */
+  validationRefs?: readonly string[];
 }
 
 export interface ProviderMaterializationResult {
