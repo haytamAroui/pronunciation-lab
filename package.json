@@ -1,6 +1,6 @@
 {
   "name": "@haytamaroui/pronunciation-lab",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "description": "Provider-neutral pronunciation rendering, benchmarking, blind review, and evidence tooling.",
   "type": "module",
