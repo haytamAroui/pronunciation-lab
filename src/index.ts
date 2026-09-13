@@ -5,6 +5,8 @@ export * from "./core/artifact.js";
 export * from "./providers/provider.js";
 export * from "./providers/azure/azureAdapter.js";
 export * from "./providers/azure/azureClient.js";
+export * from "./providers/azure/phoneticInventory.js";
+export * from "./providers/azure/lexicon.js";
 export * from "./providers/edge/edgeAdapter.js";
 export * from "./providers/edge/edgeCli.js";
 export * from "./experiment/comparisonMatrix.js";
