@@ -18,7 +18,8 @@ export interface MicrosoftComparisonMatrixOptions {
  *
  * Edge contributes only provider-default candidates. Azure contributes one
  * provider-default baseline plus canonical-IPA candidates when canonical IPA
- * exists. The caller may supply any locale/voice combination.
+ * can be represented without inferred alignment. Single-token targets may use
+ * canonicalIpa directly; multi-word targets require explicit authored spans.
  */
 export function buildMicrosoftComparisonMatrix(
   target: CanonicalPronunciationTarget,
@@ -55,8 +56,11 @@ export function buildMicrosoftComparisonMatrix(
     }),
   ];
 
-  if (target.canonicalIpa) {
-    const phoneString = target.canonicalIpa.trim().replace(/^\//u, "").replace(/\/$/u, "");
+  const authoredSpans = target.canonicalPronunciationSpans;
+  const isSingleToken = !/\s/u.test(target.text.trim());
+  const phoneString = target.canonicalIpa?.trim().replace(/^\//u, "").replace(/\/$/u, "");
+
+  if (authoredSpans || (phoneString && isSingleToken)) {
     for (const ratePercent of rates) {
       candidates.push(
         buildCandidate({
@@ -65,11 +69,17 @@ export function buildMicrosoftComparisonMatrix(
             kind: "tts",
             provider: "azure_speech",
             voiceId: options.azureVoiceId,
-            pronunciation: {
-              mode: "canonical_ipa",
-              alphabet: "ipa",
-              phoneString,
-            },
+            pronunciation: authoredSpans
+              ? {
+                  mode: "canonical_ipa",
+                  alphabet: "ipa",
+                  spans: authoredSpans,
+                }
+              : {
+                  mode: "canonical_ipa",
+                  alphabet: "ipa",
+                  phoneString: phoneString!,
+                },
             ratePercent,
             pitchPercent,
             outputFormat,
