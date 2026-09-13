@@ -22,6 +22,15 @@ const phraseTarget: CanonicalPronunciationTarget = Object.freeze({
   metadata: Object.freeze({}),
 });
 
+const legacyPhraseTarget: CanonicalPronunciationTarget = Object.freeze({
+  targetId: "test:nl-BE:legacy-phrase",
+  locale: "nl-BE",
+  text: "sok uil",
+  canonicalIpa: "/sɔk œ͡yl/",
+  role: "connected_speech",
+  metadata: Object.freeze({}),
+});
+
 describe("Azure phonetic inventories", () => {
   it("accepts documented nl-BE IPA including a multi-codepoint diphthong", () => {
     const result = validateAzurePhoneString({ locale: "nl-BE", alphabet: "ipa", phoneString: "œ͡yl" });
@@ -71,7 +80,7 @@ describe("Azure inline pronunciation", () => {
 
   it("fails closed for a multi-word legacy phoneString", () => {
     const candidate = buildCandidate({
-      target: { ...phraseTarget, canonicalPronunciationSpans: undefined },
+      target: legacyPhraseTarget,
       renderer: {
         kind: "tts",
         provider: "azure_speech",
