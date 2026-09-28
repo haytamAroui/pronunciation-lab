@@ -12,5 +12,6 @@ export * from "./providers/edge/edgeCli.js";
 export * from "./experiment/comparisonMatrix.js";
 export * from "./review/blindSession.js";
 export * from "./review/evidence.js";
+export * from "./review/workflow.js";
 export * from "./policy/selection.js";
 export * from "./governance/index.js";

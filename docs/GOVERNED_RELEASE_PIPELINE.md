@@ -2,7 +2,7 @@
 
 > Machines filter. Humans approve.
 
-This document records the first implementation slice of the governed Pronunciation Lab pipeline.
+This document records the implemented governed Pronunciation Lab pipeline.
 
 ## Hard invariants
 
@@ -13,8 +13,11 @@ This document records the first implementation slice of the governed Pronunciati
 5. Release requires explicit passing evidence from both `native_linguistic` and `clinical` human review roles.
 6. A release is bound to the exact artifact ID and audio SHA-256.
 7. Target-registry version, rendering-profile version, and renderer version are part of release identity.
-8. Releases are immutable records. A changed target, profile, renderer, or audio artifact produces a different release record.
-9. A consumer such as SoundSteps should expose an artifact only when its exact artifact ID + SHA-256 is present in an active release manifest.
+8. Releases are immutable records. Supersession/retirement is represented by a later ledger event, never by rewriting release history.
+9. Rejections are append-only structured events with deterministic ownership routing.
+10. Blind review packets never contain candidate IDs, provider identity, voice identity, rendering parameters, acoustic QA, or ASR output.
+11. Provider/configuration and machine-analysis data may be revealed only after the reviewer has submitted evidence for that blind label.
+12. A consumer such as SoundSteps should expose an artifact only when its exact artifact ID + SHA-256 resolves to an active release in the release ledger.
 
 ## Implemented flow
 
@@ -27,11 +30,86 @@ Target Registry
   -> Technical QA (blocking)
   -> Acoustic QA (advisory / abstain)
   -> Blind Native-Linguistic Review
-  -> Clinical Suitability Review
+  -> Blind Clinical Suitability Review
   -> ReleasedReference manifest
+  -> Append-only Release Ledger
 ```
 
-The existing candidate and provider layers remain reusable and experiment-oriented. The new governance layer adds explicit promotion controls without allowing provider output, CI, ASR, alignment, or acoustic metrics to grant authority.
+The existing candidate and provider layers remain reusable and experiment-oriented. The governance layer adds explicit promotion controls without allowing provider output, CI, ASR, alignment, or acoustic metrics to grant authority.
+
+## Blind review contract
+
+The blind packet contains only the authored target identity needed by the reviewer plus opaque playback references:
+
+```text
+target text
+canonical IPA
+locale
+authored target cue
+blind label
+opaque playback reference
+```
+
+It intentionally omits:
+
+```text
+candidate ID
+provider
+voice
+rate
+pitch
+pronunciation control mode
+technical metrics
+acoustic metrics
+ASR output
+```
+
+Native-linguistic review captures:
+
+- correct target;
+- natural locale realization;
+- distortion;
+- over-articulation;
+- pass / fail / abstain.
+
+Clinical suitability is separate and captures:
+
+- good model for imitation;
+- target sufficiently salient;
+- rate appropriate;
+- natural rather than exaggerated;
+- whether the clinician would comfortably model it to a child;
+- pass / fail / abstain.
+
+A `pass` is rejected by the library unless every mandatory answer supports passing. A `fail` requires a structured rejection reason.
+
+## Append-only ledgers
+
+Pronunciation Lab remains storage-neutral, so R1 provides serialization-ready ledger contracts rather than embedding a database.
+
+### Release ledger
+
+A release ledger contains hash-chained events:
+
+```text
+released -> released -> retired -> ...
+```
+
+Every event stores its sequence number, previous event fingerprint, and event fingerprint. Retirement never mutates the original release. The active set is derived from the full history.
+
+### Rejection ledger
+
+Every rejection records:
+
+- source: technical QA, acoustic QA, native linguistic, clinical, or operator;
+- target and optional candidate/artifact;
+- structured rejection reason;
+- deterministic owner;
+- evidence references;
+- timestamp;
+- hash-chain linkage.
+
+This prevents the anti-pattern `reject -> regenerate -> regenerate -> regenerate` without learning why an approach failed.
 
 ## Rejection routing
 
@@ -41,8 +119,6 @@ Structured rejection reasons route back to the responsible layer:
 - rate / salience / over-articulation / prosody problems -> Rendering Profile;
 - realization / renderer / clipping / truncation problems -> rerender or change renderer;
 - child-model suitability problems -> human/clinical redesign.
-
-This prevents the anti-pattern `reject -> regenerate -> regenerate -> regenerate` and makes failure modes measurable.
 
 ## Initial experiment
 
@@ -61,11 +137,9 @@ Only after that phase survives end-to-end should the sequence expand to medial, 
 
 ## Next implementation slices
 
-- persist append-only release/rejection ledgers;
-- add a blind review UI that hides provider, voice, rate, acoustic metrics, and ASR until submission;
-- add separate clinical suitability capture;
 - add technical audio analyzers;
 - add acoustic QA adapters that report confidence or abstain rather than claiming certainty;
 - add human-recording escalation/ingestion;
-- add release-manifest serialization/verification for SoundSteps;
-- add measurement counters for technical rejection, acoustic flags, linguistic rejection, clinical rejection, and human-recording escalation.
+- add release-manifest serialization/signature verification for SoundSteps;
+- add measurement counters for technical rejection, acoustic flags, linguistic rejection, clinical rejection, and human-recording escalation;
+- build the native-reviewed `nl-BE /s/ initial` experiment fixture only after content review.
