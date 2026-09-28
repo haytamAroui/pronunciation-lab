@@ -5,6 +5,7 @@ import {
   validateReviewEvidence,
   type CandidateReviewEvidence,
 } from "../review/evidence.js";
+import { createArtifactReviewBindingFingerprint } from "../review/workflow.js";
 import type {
   AcousticQaResult,
   GovernedCandidatePlan,
@@ -79,6 +80,18 @@ export function createReleasedReference(input: {
     const issues = validateReviewEvidence(item);
     if (issues.length > 0) {
       throw new Error(`Invalid human review evidence ${item.evidenceId}: ${issues.join(",")}`);
+    }
+    const expectedBinding = createArtifactReviewBindingFingerprint({
+      sessionId: input.session.sessionId,
+      blindLabel: item.blindLabel,
+      candidateId: input.plan.candidateId,
+      artifactId: input.artifact.artifactId,
+      audioSha256: input.artifact.audioSha256,
+    });
+    if (item.artifactBindingFingerprint !== expectedBinding) {
+      throw new Error(
+        `Human review evidence ${item.evidenceId} does not bind to the release artifact bytes`,
+      );
     }
   }
 

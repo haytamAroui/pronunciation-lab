@@ -26,6 +26,7 @@ export interface AuthoredTargetCue {
 export interface BlindPlaybackBinding {
   candidateId: string;
   artifactId: string;
+  audioSha256: string;
   playbackRef: string;
 }
 
@@ -44,6 +45,7 @@ export interface BlindReviewPacket {
   items: readonly Readonly<{
     blindLabel: string;
     playbackRef: string;
+    reviewBindingFingerprint: string;
   }>[];
   authority: "blind_human_review";
 }
@@ -80,8 +82,33 @@ export interface PostReviewReveal {
   acousticQa: AcousticQaResult;
 }
 
+const SHA256 = /^sha256:[0-9a-f]{64}$/u;
+
 function requireText(value: string, label: string): void {
   if (!value.trim()) throw new Error(`${label} is required`);
+}
+
+export function createArtifactReviewBindingFingerprint(input: {
+  sessionId: string;
+  blindLabel: string;
+  candidateId: string;
+  artifactId: string;
+  audioSha256: string;
+}): string {
+  requireText(input.sessionId, "sessionId");
+  requireText(input.blindLabel, "blindLabel");
+  requireText(input.candidateId, "candidateId");
+  requireText(input.artifactId, "artifactId");
+  if (!SHA256.test(input.audioSha256)) throw new Error("audioSha256 must be an exact SHA-256 digest");
+
+  return fingerprint({
+    bindingType: "blind_artifact_review",
+    sessionId: input.sessionId,
+    blindLabel: input.blindLabel,
+    candidateId: input.candidateId,
+    artifactId: input.artifactId,
+    audioSha256: input.audioSha256,
+  });
 }
 
 function validateSessionBinding(input: {
@@ -121,6 +148,9 @@ export function createBlindReviewPacket(input: {
   for (const binding of input.bindings) {
     requireText(binding.artifactId, "binding.artifactId");
     requireText(binding.playbackRef, "binding.playbackRef");
+    if (!SHA256.test(binding.audioSha256)) {
+      throw new Error("binding.audioSha256 must be an exact SHA-256 digest");
+    }
   }
 
   const bindingByCandidate = new Map(
@@ -133,6 +163,13 @@ export function createBlindReviewPacket(input: {
       return Object.freeze({
         blindLabel: assignment.blindLabel,
         playbackRef: binding.playbackRef,
+        reviewBindingFingerprint: createArtifactReviewBindingFingerprint({
+          sessionId: input.session.sessionId,
+          blindLabel: assignment.blindLabel,
+          candidateId: assignment.candidateId,
+          artifactId: binding.artifactId,
+          audioSha256: binding.audioSha256,
+        }),
       });
     }),
   );
@@ -197,7 +234,8 @@ function makeEvidence(input: {
   if (input.packet.reviewerRole !== input.role) {
     throw new Error("Review packet role does not match submission role");
   }
-  if (!input.packet.items.some((item) => item.blindLabel === input.blindLabel)) {
+  const item = input.packet.items.find((candidate) => candidate.blindLabel === input.blindLabel);
+  if (!item) {
     throw new Error(`Unknown blind label: ${input.blindLabel}`);
   }
 
@@ -205,6 +243,7 @@ function makeEvidence(input: {
     sessionId: input.packet.sessionId,
     packetId: input.packet.packetId,
     blindLabel: input.blindLabel,
+    artifactBindingFingerprint: item.reviewBindingFingerprint,
     reviewerId: input.reviewerId,
     reviewedAt: input.reviewedAt,
     role: input.role,
@@ -220,6 +259,7 @@ function makeEvidence(input: {
     evidenceId: `evidence:${evidenceFingerprint.slice("sha256:".length)}`,
     sessionId: input.packet.sessionId,
     blindLabel: input.blindLabel,
+    artifactBindingFingerprint: item.reviewBindingFingerprint,
     reviewerId: input.reviewerId,
     reviewerRole: input.role,
     reviewedAt: input.reviewedAt,
@@ -356,6 +396,16 @@ export function revealPostReviewAnalysis(input: {
   }
   if (input.artifact.candidateId !== input.candidate.candidateId) {
     throw new Error("Artifact does not match reviewed candidate");
+  }
+  const expectedBinding = createArtifactReviewBindingFingerprint({
+    sessionId: input.session.sessionId,
+    blindLabel: input.evidence.blindLabel,
+    candidateId: input.candidate.candidateId,
+    artifactId: input.artifact.artifactId,
+    audioSha256: input.artifact.audioSha256,
+  });
+  if (input.evidence.artifactBindingFingerprint !== expectedBinding) {
+    throw new Error("Review evidence does not bind to the supplied artifact bytes");
   }
   if (
     input.technicalQa.artifactId !== input.artifact.artifactId ||

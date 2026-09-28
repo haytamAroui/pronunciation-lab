@@ -47,6 +47,14 @@
     "./human": {
       "types": "./dist/human/index.d.ts",
       "import": "./dist/human/index.js"
+    },
+    "./consumer": {
+      "types": "./dist/consumer/index.d.ts",
+      "import": "./dist/consumer/index.js"
+    },
+    "./consumer/soundsteps": {
+      "types": "./dist/consumer/soundsteps.d.ts",
+      "import": "./dist/consumer/soundsteps.js"
     }
   },
   "files": [
