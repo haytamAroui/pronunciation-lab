@@ -17,7 +17,9 @@ This document records the implemented governed Pronunciation Lab pipeline.
 9. Rejections are append-only structured events with deterministic ownership routing.
 10. Blind review packets never contain candidate IDs, provider identity, voice identity, rendering parameters, acoustic QA, or ASR output.
 11. Provider/configuration and machine-analysis data may be revealed only after the reviewer has submitted evidence for that blind label.
-12. A consumer such as SoundSteps should expose an artifact only when its exact artifact ID + SHA-256 resolves to an active release in the release ledger.
+12. Human recordings are first-class candidates and do not bypass technical, linguistic, clinical, or release gates.
+13. A human recording's source SHA-256 is part of candidate identity and must equal the artifact SHA-256.
+14. A consumer such as SoundSteps should expose an artifact only when its exact artifact ID + SHA-256 resolves to an active release in the release ledger.
 
 ## Implemented flow
 
@@ -34,17 +36,31 @@ Target Registry
   -> Blind Clinical Suitability Review
   -> ReleasedReference manifest
   -> Append-only Release Ledger
+
+Synthetic candidates all fail complete human review
+  -> human_recording_required
+  -> Human Recording Escalation
+  -> Protocol-bound Human Recording Ingestion
+  -> same governed QA/review/release path
 ```
 
 The existing candidate and provider layers remain reusable and experiment-oriented. The governance layer adds explicit promotion controls without allowing provider output, CI, ASR, alignment, or acoustic metrics to grant authority.
 
 ## Audio QA R1
 
-The built-in QA package now supports RIFF PCM decoding and deterministic technical checks. Compressed bytes are never treated as decoded audio. Consumers can either render PCM (Azure supports a registered 24 kHz 16-bit mono RIFF format) or supply decoded PCM from an external decoder.
+The built-in QA package supports RIFF PCM decoding and deterministic technical checks. Compressed bytes are never treated as decoded audio. Consumers can either render PCM or supply decoded PCM from an external decoder.
 
 The first acoustic adapter is deliberately narrow: `nl-BE /s/`-initial experiments can use `analyzeSInitialEvidence()` to search for high-frequency onset evidence using RMS, zero-crossing rate, spectral centroid, and high-band energy ratio. Its vocabulary is intentionally limited to `target_likely_located`, `flagged`, and `abstain`.
 
 See [ACOUSTIC_QA_R1.md](./ACOUSTIC_QA_R1.md).
+
+## Human recording fallback
+
+Human recording is now a governed escalation path rather than a manual file swap.
+
+Escalation requires a fully reviewed all-synthetic session whose selection result is `human_recording_required`. Recording ingestion is protocol-bound and the exact source SHA-256 becomes part of candidate identity. Human candidates then re-enter the same governed plan, technical QA, acoustic QA, blind review, clinical review, and release path.
+
+See [HUMAN_RECORDING_FALLBACK.md](./HUMAN_RECORDING_FALLBACK.md).
 
 ## Blind review contract
 
@@ -59,64 +75,13 @@ blind label
 opaque playback reference
 ```
 
-It intentionally omits:
-
-```text
-candidate ID
-provider
-voice
-rate
-pitch
-pronunciation control mode
-technical metrics
-acoustic metrics
-ASR output
-```
-
-Native-linguistic review captures:
-
-- correct target;
-- natural locale realization;
-- distortion;
-- over-articulation;
-- pass / fail / abstain.
-
-Clinical suitability is separate and captures:
-
-- good model for imitation;
-- target sufficiently salient;
-- rate appropriate;
-- natural rather than exaggerated;
-- whether the clinician would comfortably model it to a child;
-- pass / fail / abstain.
-
-A `pass` is rejected by the library unless every mandatory answer supports passing. A `fail` requires a structured rejection reason.
+It intentionally omits candidate ID, provider, voice, rate, pitch, pronunciation control mode, technical metrics, acoustic metrics, and ASR output.
 
 ## Append-only ledgers
 
-Pronunciation Lab remains storage-neutral, so R1 provides serialization-ready ledger contracts rather than embedding a database.
+Pronunciation Lab remains storage-neutral, so R1 provides serialization-ready hash-chained ledger contracts rather than embedding a database.
 
-### Release ledger
-
-A release ledger contains hash-chained events:
-
-```text
-released -> released -> retired -> ...
-```
-
-Every event stores its sequence number, previous event fingerprint, and event fingerprint. Retirement never mutates the original release. The active set is derived from the full history.
-
-### Rejection ledger
-
-Every rejection records:
-
-- source: technical QA, acoustic QA, native linguistic, clinical, or operator;
-- target and optional candidate/artifact;
-- structured rejection reason;
-- deterministic owner;
-- evidence references;
-- timestamp;
-- hash-chain linkage.
+Release retirement never mutates the original release. Rejection records include the source, target/candidate/artifact references, structured reason, deterministic owner, evidence refs, and timestamp.
 
 ## Initial experiment
 
@@ -135,8 +100,7 @@ Only after that phase survives end-to-end should the sequence expand to medial, 
 
 ## Next implementation slices
 
-- add human-recording escalation/ingestion;
-- add release-manifest serialization/signature verification for SoundSteps;
+- add release-manifest serialization/verification for SoundSteps;
 - add measurement counters for technical rejection, acoustic flags, linguistic rejection, clinical rejection, and human-recording escalation;
 - build the native-reviewed `nl-BE /s/ initial` experiment fixture only after content review;
 - calibrate acoustic thresholds from experiment evidence before adding more phoneme classes.

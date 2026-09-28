@@ -43,6 +43,10 @@
     "./qa": {
       "types": "./dist/qa/index.d.ts",
       "import": "./dist/qa/index.js"
+    },
+    "./human": {
+      "types": "./dist/human/index.d.ts",
+      "import": "./dist/human/index.js"
     }
   },
   "files": [

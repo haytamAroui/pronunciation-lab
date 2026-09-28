@@ -16,3 +16,4 @@ export * from "./review/workflow.js";
 export * from "./policy/selection.js";
 export * from "./governance/index.js";
 export * from "./qa/index.js";
+export * from "./human/index.js";

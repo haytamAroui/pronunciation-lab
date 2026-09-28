@@ -63,6 +63,12 @@ export function createGovernedCandidatePlan(input: {
   ) {
     throw new Error("TTS candidate provider does not match renderer identity");
   }
+  if (
+    input.candidate.renderer.kind === "human" &&
+    input.renderer.rendererId !== "human_recording"
+  ) {
+    throw new Error("Human candidates must use the human_recording renderer identity");
+  }
 
   const planFingerprint = fingerprint({
     targetId: input.targetRecord.target.targetId,
