@@ -27,8 +27,9 @@ Target Registry
   -> Renderer Eligibility
   -> Governed Candidate Plan
   -> Immutable Render Artifact
-  -> Technical QA (blocking)
-  -> Acoustic QA (advisory / abstain)
+  -> PCM decode / decoded-audio boundary
+  -> Technical Audio QA (blocking)
+  -> Target-specific Acoustic QA (advisory / abstain)
   -> Blind Native-Linguistic Review
   -> Blind Clinical Suitability Review
   -> ReleasedReference manifest
@@ -36,6 +37,14 @@ Target Registry
 ```
 
 The existing candidate and provider layers remain reusable and experiment-oriented. The governance layer adds explicit promotion controls without allowing provider output, CI, ASR, alignment, or acoustic metrics to grant authority.
+
+## Audio QA R1
+
+The built-in QA package now supports RIFF PCM decoding and deterministic technical checks. Compressed bytes are never treated as decoded audio. Consumers can either render PCM (Azure supports a registered 24 kHz 16-bit mono RIFF format) or supply decoded PCM from an external decoder.
+
+The first acoustic adapter is deliberately narrow: `nl-BE /s/`-initial experiments can use `analyzeSInitialEvidence()` to search for high-frequency onset evidence using RMS, zero-crossing rate, spectral centroid, and high-band energy ratio. Its vocabulary is intentionally limited to `target_likely_located`, `flagged`, and `abstain`.
+
+See [ACOUSTIC_QA_R1.md](./ACOUSTIC_QA_R1.md).
 
 ## Blind review contract
 
@@ -109,17 +118,6 @@ Every rejection records:
 - timestamp;
 - hash-chain linkage.
 
-This prevents the anti-pattern `reject -> regenerate -> regenerate -> regenerate` without learning why an approach failed.
-
-## Rejection routing
-
-Structured rejection reasons route back to the responsible layer:
-
-- target / IPA / locale / stress problems -> Target Registry;
-- rate / salience / over-articulation / prosody problems -> Rendering Profile;
-- realization / renderer / clipping / truncation problems -> rerender or change renderer;
-- child-model suitability problems -> human/clinical redesign.
-
 ## Initial experiment
 
 The first real content experiment should remain narrow:
@@ -137,9 +135,8 @@ Only after that phase survives end-to-end should the sequence expand to medial, 
 
 ## Next implementation slices
 
-- add technical audio analyzers;
-- add acoustic QA adapters that report confidence or abstain rather than claiming certainty;
 - add human-recording escalation/ingestion;
 - add release-manifest serialization/signature verification for SoundSteps;
 - add measurement counters for technical rejection, acoustic flags, linguistic rejection, clinical rejection, and human-recording escalation;
-- build the native-reviewed `nl-BE /s/ initial` experiment fixture only after content review.
+- build the native-reviewed `nl-BE /s/ initial` experiment fixture only after content review;
+- calibrate acoustic thresholds from experiment evidence before adding more phoneme classes.
