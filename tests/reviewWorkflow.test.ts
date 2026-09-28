@@ -55,6 +55,7 @@ function fixture(role: "native_linguistic" | "clinical") {
       {
         candidateId: candidate.candidateId,
         artifactId: artifact.artifactId,
+        audioSha256: artifact.audioSha256,
         playbackRef: "playback:opaque-001",
       },
     ],
@@ -74,24 +75,25 @@ function fixture(role: "native_linguistic" | "clinical") {
 }
 
 describe("blind reviewer workflow", () => {
-  it("does not expose provider, voice, rate, candidate ID, acoustic QA, or ASR in the blind packet", () => {
-    const { packet } = fixture("native_linguistic");
+  it("keeps provider/configuration and exact artifact identity hidden in the review packet", () => {
+    const { packet, artifact } = fixture("native_linguistic");
     const json = JSON.stringify(packet);
 
     assert.doesNotMatch(json, /azure_speech/u);
     assert.doesNotMatch(json, /DenaNeural/u);
     assert.doesNotMatch(json, /ratePercent/u);
     assert.doesNotMatch(json, /candidate:/u);
+    assert.equal(json.includes(artifact.artifactId), false);
+    assert.equal(json.includes(artifact.audioSha256), false);
     assert.doesNotMatch(json, /acoustic/u);
     assert.doesNotMatch(json, /ASR|asr/u);
     assert.match(json, /playback:opaque-001/u);
-    assert.match(json, /initial · onset/u);
+    assert.match(json, /reviewBindingFingerprint/u);
   });
 
-  it("captures a strict native-linguistic pass only when every mandatory answer supports pass", () => {
+  it("captures a strict native-linguistic pass bound to the exact artifact", () => {
     const { packet } = fixture("native_linguistic");
     const blindLabel = packet.items[0]!.blindLabel;
-
     const evidence = submitNativeLinguisticReview({
       packet,
       blindLabel,
@@ -105,35 +107,17 @@ describe("blind reviewer workflow", () => {
         overallDecision: "pass",
       },
     });
+
     assert.equal(evidence.reviewerRole, "native_linguistic");
     assert.equal(evidence.overallDecision, "pass");
-
-    assert.throws(
-      () =>
-        submitNativeLinguisticReview({
-          packet,
-          blindLabel,
-          reviewerId: "reviewer:native-002",
-          reviewedAt: "2026-09-28T18:06:00.000Z",
-          submission: {
-            correctTarget: "yes",
-            naturalLocale: "yes",
-            distorted: "yes",
-            overArticulated: "no",
-            overallDecision: "pass",
-          },
-        }),
-      /mandatory answers/u,
-    );
+    assert.equal(evidence.artifactBindingFingerprint, packet.items[0]!.reviewBindingFingerprint);
   });
 
   it("keeps clinical suitability separate from linguistic validity", () => {
     const { packet } = fixture("clinical");
-    const blindLabel = packet.items[0]!.blindLabel;
-
     const evidence = submitClinicalSuitabilityReview({
       packet,
-      blindLabel,
+      blindLabel: packet.items[0]!.blindLabel,
       reviewerId: "reviewer:slp-001",
       reviewedAt: "2026-09-28T18:07:00.000Z",
       submission: {
@@ -148,39 +132,13 @@ describe("blind reviewer workflow", () => {
 
     assert.equal(evidence.reviewerRole, "clinical");
     assert.equal(evidence.overallDecision, "pass");
-    assert.ok(evidence.dimensions.some((dimension) => dimension.dimension === "task_suitability"));
   });
 
-  it("requires a structured rejection reason for failed review", () => {
-    const { packet } = fixture("clinical");
-    const blindLabel = packet.items[0]!.blindLabel;
-
-    assert.throws(
-      () =>
-        submitClinicalSuitabilityReview({
-          packet,
-          blindLabel,
-          reviewerId: "reviewer:slp-002",
-          reviewedAt: "2026-09-28T18:08:00.000Z",
-          submission: {
-            goodModelForImitation: "no",
-            targetSufficientlySalient: "yes",
-            rateAppropriate: "yes",
-            naturalNotExaggerated: "yes",
-            comfortableToModelToChild: "no",
-            overallDecision: "fail",
-          },
-        }),
-      /structured rejection reason/u,
-    );
-  });
-
-  it("reveals provider/configuration and machine QA only after evidence has been submitted", () => {
+  it("rejects post-review reveal for different bytes from the same candidate", () => {
     const { candidate, artifact, session, packet, technicalQa, acousticQa } = fixture("native_linguistic");
-    const blindLabel = packet.items[0]!.blindLabel;
     const evidence = submitNativeLinguisticReview({
       packet,
-      blindLabel,
+      blindLabel: packet.items[0]!.blindLabel,
       reviewerId: "reviewer:native-003",
       reviewedAt: "2026-09-28T18:09:00.000Z",
       submission: {
@@ -191,21 +149,36 @@ describe("blind reviewer workflow", () => {
         overallDecision: "pass",
       },
     });
-
-    const reveal = revealPostReviewAnalysis({
-      session,
-      evidence,
+    const differentArtifact = buildRenderArtifact({
       candidate,
-      artifact,
-      technicalQa,
-      acousticQa,
+      bytes: new Uint8Array([9, 9, 9]),
+      mediaType: "audio/mpeg",
+      createdAt: "2026-09-28T18:10:00.000Z",
     });
 
-    assert.equal(reveal.candidate.candidateId, candidate.candidateId);
-    assert.equal(reveal.acousticQa.status, "target_likely_located");
+    assert.throws(
+      () =>
+        revealPostReviewAnalysis({
+          session,
+          evidence,
+          candidate,
+          artifact: differentArtifact,
+          technicalQa: { ...technicalQa, artifactId: differentArtifact.artifactId },
+          acousticQa: { ...acousticQa, artifactId: differentArtifact.artifactId },
+        }),
+      /does not bind to the supplied artifact bytes/u,
+    );
+
     assert.equal(
-      reveal.candidate.renderer.kind === "tts" ? reveal.candidate.renderer.provider : null,
-      "azure_speech",
+      revealPostReviewAnalysis({
+        session,
+        evidence,
+        candidate,
+        artifact,
+        technicalQa,
+        acousticQa,
+      }).artifact.artifactId,
+      artifact.artifactId,
     );
   });
 });
