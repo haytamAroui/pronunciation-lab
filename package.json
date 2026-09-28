@@ -35,6 +35,10 @@
     "./policy": {
       "types": "./dist/policy/index.d.ts",
       "import": "./dist/policy/index.js"
+    },
+    "./governance": {
+      "types": "./dist/governance/index.d.ts",
+      "import": "./dist/governance/index.js"
     }
   },
   "files": [
