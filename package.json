@@ -2,30 +2,85 @@
   "name": "@haytamaroui/pronunciation-lab",
   "version": "0.1.1",
   "private": false,
-  "description": "Provider-neutral pronunciation rendering, multilingual authority, blind review, and evidence tooling.",
+  "description": "Provider-neutral articulation-aware speech-practice voice generation, review, and evidence tooling.",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": {"types": "./dist/index.d.ts","import": "./dist/index.js"},
-    "./core": {"types": "./dist/core/index.d.ts","import": "./dist/core/index.js"},
-    "./authority": {"types": "./dist/authority/index.d.ts","import": "./dist/authority/index.js"},
-    "./phonemizers": {"types": "./dist/phonemizers/index.d.ts","import": "./dist/phonemizers/index.js"},
-    "./catalog": {"types": "./dist/catalog/index.d.ts","import": "./dist/catalog/index.js"},
-    "./azure": {"types": "./dist/providers/azure/index.d.ts","import": "./dist/providers/azure/index.js"},
-    "./edge": {"types": "./dist/providers/edge/index.d.ts","import": "./dist/providers/edge/index.js"},
-    "./review": {"types": "./dist/review/index.d.ts","import": "./dist/review/index.js"},
-    "./experiment": {"types": "./dist/experiment/index.d.ts","import": "./dist/experiment/index.js"},
-    "./policy": {"types": "./dist/policy/index.d.ts","import": "./dist/policy/index.js"},
-    "./governance": {"types": "./dist/governance/index.d.ts","import": "./dist/governance/index.js"},
-    "./qa": {"types": "./dist/qa/index.d.ts","import": "./dist/qa/index.js"},
-    "./human": {"types": "./dist/human/index.d.ts","import": "./dist/human/index.js"},
-    "./consumer": {"types": "./dist/consumer/index.d.ts","import": "./dist/consumer/index.js"},
-    "./consumer/soundsteps": {"types": "./dist/consumer/soundsteps.d.ts","import": "./dist/consumer/soundsteps.js"},
-    "./metrics": {"types": "./dist/metrics/index.d.ts","import": "./dist/metrics/index.js"}
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./authority": {
+      "types": "./dist/authority/index.d.ts",
+      "import": "./dist/authority/index.js"
+    },
+    "./phonemizers": {
+      "types": "./dist/phonemizers/index.d.ts",
+      "import": "./dist/phonemizers/index.js"
+    },
+    "./catalog": {
+      "types": "./dist/catalog/index.d.ts",
+      "import": "./dist/catalog/index.js"
+    },
+    "./azure": {
+      "types": "./dist/providers/azure/index.d.ts",
+      "import": "./dist/providers/azure/index.js"
+    },
+    "./edge": {
+      "types": "./dist/providers/edge/index.d.ts",
+      "import": "./dist/providers/edge/index.js"
+    },
+    "./review": {
+      "types": "./dist/review/index.d.ts",
+      "import": "./dist/review/index.js"
+    },
+    "./experiment": {
+      "types": "./dist/experiment/index.d.ts",
+      "import": "./dist/experiment/index.js"
+    },
+    "./policy": {
+      "types": "./dist/policy/index.d.ts",
+      "import": "./dist/policy/index.js"
+    },
+    "./governance": {
+      "types": "./dist/governance/index.d.ts",
+      "import": "./dist/governance/index.js"
+    },
+    "./qa": {
+      "types": "./dist/qa/index.d.ts",
+      "import": "./dist/qa/index.js"
+    },
+    "./human": {
+      "types": "./dist/human/index.d.ts",
+      "import": "./dist/human/index.js"
+    },
+    "./consumer": {
+      "types": "./dist/consumer/index.d.ts",
+      "import": "./dist/consumer/index.js"
+    },
+    "./consumer/soundsteps": {
+      "types": "./dist/consumer/soundsteps.d.ts",
+      "import": "./dist/consumer/soundsteps.js"
+    },
+    "./metrics": {
+      "types": "./dist/metrics/index.d.ts",
+      "import": "./dist/metrics/index.js"
+    },
+    "./practice": {
+      "types": "./dist/practice/index.d.ts",
+      "import": "./dist/practice/index.js"
+    }
   },
-  "files": ["dist","README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -36,10 +91,21 @@
     "prepare": "npm run build",
     "prepublishOnly": "npm run check"
   },
-  "engines": {"node": ">=22"},
-  "repository": {"type": "git","url": "git+https://github.com/haytamAroui/pronunciation-lab.git"},
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haytamAroui/pronunciation-lab.git"
+  },
   "homepage": "https://github.com/haytamAroui/pronunciation-lab#readme",
-  "bugs": {"url": "https://github.com/haytamAroui/pronunciation-lab/issues"},
-  "devDependencies": {"@types/node": "^26.4.1","tsx": "^4.20.0","typescript": "~6.0.3"},
+  "bugs": {
+    "url": "https://github.com/haytamAroui/pronunciation-lab/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "tsx": "^4.20.0",
+    "typescript": "~6.0.3"
+  },
   "license": "UNLICENSED"
 }

@@ -97,6 +97,15 @@ The Arabic MSA adapter is a fresh conservative rule engine for diacritized Arabi
 
 Unvocalized or context-dependent forms become `partial` or `abstain`; they are never silently promoted.
 
+
+## Speech-practice voice engine
+
+Pronunciation Lab now has a provider-independent articulation layer. It models phoneme, syllable, word, phrase, and sentence reference units with explicit IPA, target position, delivery intent, repetitions, and pause timing before binding them to Edge, Azure, a local model, or another backend.
+
+Repeated isolated sounds are composed from controlled audio units rather than sending text such as `"s s s"` to a normal TTS engine. Edge is therefore usable for natural word/phrase candidates, while phoneme-level tasks can fail closed or route to a renderer that genuinely accepts phonetic input.
+
+See [Speech Practice Voice Engine R1](docs/SPEECH_PRACTICE_ENGINE_R1.md).
+
 ## Governed release
 
 Released references still require:
