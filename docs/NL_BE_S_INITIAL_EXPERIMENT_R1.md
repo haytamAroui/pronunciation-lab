@@ -155,3 +155,21 @@ createReviewedNlBeSInitialTargetRecord()
 The first function produces the 12-item review queue. The second validates the reviewer's role/locale/target-class authority at the review timestamp. The third promotes only fingerprint-valid passing review evidence into the target registry.
 
 Test fixtures may use the reference IPA candidates as simulated reviewer answers, but production/native approval must supply the reviewer-confirmed IPA rather than copying the hint automatically.
+
+
+## Portable review handoff
+
+For an actual reviewer workflow, use the portable review bundle layer:
+
+```text
+createNlBeSInitialNativeReviewBundle()
+  -> renderNlBeSInitialNativeReviewSheetMarkdown()
+  -> createNlBeSInitialNativeReviewResponseTemplate()
+  -> reviewer completes all 12 items
+  -> createNlBeSInitialNativeReviewResponse()
+  -> importNlBeSInitialNativeReviewResponse()
+```
+
+The import preserves failed/abstained decisions but promotes only explicit passing items. Candidate generation remains blocked unless all 12 experiment slots have valid native-reviewed target records.
+
+See [NATIVE_REVIEW_BUNDLE_R1.md](./NATIVE_REVIEW_BUNDLE_R1.md).
