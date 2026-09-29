@@ -10,6 +10,7 @@ import {
   serializeNlBeSInitialNativeReviewBundle,
   verifyNlBeSInitialNativeReviewBundle,
   verifyNlBeSInitialNativeReviewResponse,
+  type NlBeSInitialNativeReviewResponseItem,
 } from "../src/index.js";
 
 const reviewerAuthority = createReviewerAuthorityRecord({
@@ -28,7 +29,7 @@ function bundle() {
   });
 }
 
-function passingItems() {
+function passingItems(): NlBeSInitialNativeReviewResponseItem[] {
   const reviewBundle = bundle();
   return reviewBundle.packet.items.map((item) => ({
     itemId: item.itemId,
