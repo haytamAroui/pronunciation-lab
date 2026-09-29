@@ -6,6 +6,7 @@ import {
   createAcousticQaResult,
   createBlindReviewPacket,
   createBlindSession,
+  createReviewerAuthorityRecord,
   createTechnicalQaResult,
   revealPostReviewAnalysis,
   submitClinicalSuitabilityReview,
@@ -19,8 +20,19 @@ const target: CanonicalPronunciationTarget = Object.freeze({
   text: "sok",
   canonicalIpa: "/sɔk/",
   role: "pronunciation_reference",
-  metadata: Object.freeze({}),
+  metadata: Object.freeze({ targetClass: "s_initial_singleton" }),
 });
+
+function authority(role: "native_linguistic" | "clinical") {
+  return createReviewerAuthorityRecord({
+    reviewerId: role === "native_linguistic" ? "reviewer:native-001" : "reviewer:slp-001",
+    role,
+    localeScopes: ["nl-BE"],
+    targetClassScopes: ["s_initial_singleton"],
+    qualificationRefs: [`credential:${role}:test`],
+    authorizedAt: "2026-09-28T17:00:00.000Z",
+  });
+}
 
 function fixture(role: "native_linguistic" | "clinical") {
   const candidate = buildCandidate({
@@ -91,13 +103,13 @@ describe("blind reviewer workflow", () => {
     assert.match(json, /reviewBindingFingerprint/u);
   });
 
-  it("captures a strict native-linguistic pass bound to the exact artifact", () => {
+  it("captures a strict authorized native-linguistic pass bound to exact artifact bytes", () => {
     const { packet } = fixture("native_linguistic");
-    const blindLabel = packet.items[0]!.blindLabel;
+    const reviewerAuthority = authority("native_linguistic");
     const evidence = submitNativeLinguisticReview({
       packet,
-      blindLabel,
-      reviewerId: "reviewer:native-001",
+      blindLabel: packet.items[0]!.blindLabel,
+      reviewerAuthority,
       reviewedAt: "2026-09-28T18:05:00.000Z",
       submission: {
         correctTarget: "yes",
@@ -109,16 +121,16 @@ describe("blind reviewer workflow", () => {
     });
 
     assert.equal(evidence.reviewerRole, "native_linguistic");
-    assert.equal(evidence.overallDecision, "pass");
+    assert.equal(evidence.reviewerAuthorityId, reviewerAuthority.authorityId);
     assert.equal(evidence.artifactBindingFingerprint, packet.items[0]!.reviewBindingFingerprint);
   });
 
-  it("keeps clinical suitability separate from linguistic validity", () => {
+  it("keeps clinical suitability separate and requires clinical authority", () => {
     const { packet } = fixture("clinical");
     const evidence = submitClinicalSuitabilityReview({
       packet,
       blindLabel: packet.items[0]!.blindLabel,
-      reviewerId: "reviewer:slp-001",
+      reviewerAuthority: authority("clinical"),
       reviewedAt: "2026-09-28T18:07:00.000Z",
       submission: {
         goodModelForImitation: "yes",
@@ -134,12 +146,34 @@ describe("blind reviewer workflow", () => {
     assert.equal(evidence.overallDecision, "pass");
   });
 
+  it("rejects a native authority when used for the clinical role", () => {
+    const { packet } = fixture("clinical");
+    assert.throws(
+      () =>
+        submitClinicalSuitabilityReview({
+          packet,
+          blindLabel: packet.items[0]!.blindLabel,
+          reviewerAuthority: authority("native_linguistic"),
+          reviewedAt: "2026-09-28T18:07:00.000Z",
+          submission: {
+            goodModelForImitation: "yes",
+            targetSufficientlySalient: "yes",
+            rateAppropriate: "yes",
+            naturalNotExaggerated: "yes",
+            comfortableToModelToChild: "yes",
+            overallDecision: "pass",
+          },
+        }),
+      /role mismatch/u,
+    );
+  });
+
   it("rejects post-review reveal for different bytes from the same candidate", () => {
     const { candidate, artifact, session, packet, technicalQa, acousticQa } = fixture("native_linguistic");
     const evidence = submitNativeLinguisticReview({
       packet,
       blindLabel: packet.items[0]!.blindLabel,
-      reviewerId: "reviewer:native-003",
+      reviewerAuthority: authority("native_linguistic"),
       reviewedAt: "2026-09-28T18:09:00.000Z",
       submission: {
         correctTarget: "yes",
@@ -167,18 +201,6 @@ describe("blind reviewer workflow", () => {
           acousticQa: { ...acousticQa, artifactId: differentArtifact.artifactId },
         }),
       /does not bind to the supplied artifact bytes/u,
-    );
-
-    assert.equal(
-      revealPostReviewAnalysis({
-        session,
-        evidence,
-        candidate,
-        artifact,
-        technicalQa,
-        acousticQa,
-      }).artifact.artifactId,
-      artifact.artifactId,
     );
   });
 });

@@ -138,3 +138,20 @@ First collect enough R1 evidence to compare:
 - human-recording escalations.
 
 Then revise the acoustic policy from observed disagreement patterns before generalizing.
+
+
+## Reviewer authority
+
+The authoring gate now requires an explicit `ReviewerAuthorityRecord` rather than accepting a bare reviewer ID or role string.
+
+Use:
+
+```text
+createNlBeSInitialNativeReviewPacket()
+submitNlBeSInitialNativeTargetReview()
+createReviewedNlBeSInitialTargetRecord()
+```
+
+The first function produces the 12-item review queue. The second validates the reviewer's role/locale/target-class authority at the review timestamp. The third promotes only fingerprint-valid passing review evidence into the target registry.
+
+Test fixtures may use the reference IPA candidates as simulated reviewer answers, but production/native approval must supply the reviewer-confirmed IPA rather than copying the hint automatically.

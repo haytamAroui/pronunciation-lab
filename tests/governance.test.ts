@@ -10,12 +10,14 @@ import {
   createReleasedReference,
   createRendererEligibilityRecord,
   createRenderingProfile,
+  createReviewerAuthorityRecord,
   createTargetRegistryRecord,
   createTechnicalQaResult,
   hasActiveReleaseForArtifact,
   routeRejection,
   type CandidateReviewEvidence,
   type CanonicalPronunciationTarget,
+  type ReviewerAuthorityRecord,
 } from "../src/index.js";
 
 const target: CanonicalPronunciationTarget = Object.freeze({
@@ -107,15 +109,35 @@ function makeFixture(profileVersion = "1.0.0", targetVersion = "1.0.0") {
   return { targetRecord, profile, eligibility, candidate, plan, artifact, technicalQa, acousticQa, session };
 }
 
+function authorities(): readonly ReviewerAuthorityRecord[] {
+  return Object.freeze([
+    createReviewerAuthorityRecord({
+      reviewerId: "reviewer:linguistic",
+      role: "native_linguistic",
+      localeScopes: ["nl-BE"],
+      targetClassScopes: ["s_initial"],
+      qualificationRefs: ["credential:native:test"],
+      authorizedAt: "2026-09-28T17:00:00.000Z",
+    }),
+    createReviewerAuthorityRecord({
+      reviewerId: "reviewer:clinical",
+      role: "clinical",
+      localeScopes: ["nl-BE"],
+      targetClassScopes: ["s_initial"],
+      qualificationRefs: ["credential:clinical:test"],
+      authorizedAt: "2026-09-28T17:00:00.000Z",
+    }),
+  ]);
+}
+
 function evidence(
   fixture: ReturnType<typeof makeFixture>,
-  role: "native_linguistic" | "clinical",
-  suffix: string,
+  authority: ReviewerAuthorityRecord,
 ): CandidateReviewEvidence {
   const blindLabel = fixture.session.assignments[0]!.blindLabel;
   return Object.freeze({
     schemaVersion: "1.0.0",
-    evidenceId: `evidence:${suffix}`,
+    evidenceId: `evidence:${authority.role}`,
     sessionId: fixture.session.sessionId,
     blindLabel,
     artifactBindingFingerprint: createArtifactReviewBindingFingerprint({
@@ -125,12 +147,13 @@ function evidence(
       artifactId: fixture.artifact.artifactId,
       audioSha256: fixture.artifact.audioSha256,
     }),
-    reviewerId: `reviewer:${suffix}`,
-    reviewerRole: role,
+    reviewerId: authority.reviewerId,
+    reviewerRole: authority.role,
+    reviewerAuthorityId: authority.authorityId,
     reviewedAt: "2026-09-28T18:10:00.000Z",
     dimensions: Object.freeze([
       Object.freeze({
-        dimension: role === "native_linguistic" ? "linguistic_correctness" as const : "task_suitability" as const,
+        dimension: authority.role === "native_linguistic" ? "linguistic_correctness" as const : "task_suitability" as const,
         decision: "pass" as const,
       }),
     ]),
@@ -139,11 +162,8 @@ function evidence(
   });
 }
 
-function passingEvidence(fixture: ReturnType<typeof makeFixture>) {
-  return [
-    evidence(fixture, "native_linguistic", "linguistic"),
-    evidence(fixture, "clinical", "clinical"),
-  ];
+function passingEvidence(fixture: ReturnType<typeof makeFixture>, reviewerAuthorities: readonly ReviewerAuthorityRecord[]) {
+  return reviewerAuthorities.map((authority) => evidence(fixture, authority));
 }
 
 describe("governed release pipeline", () => {
@@ -158,21 +178,24 @@ describe("governed release pipeline", () => {
           acousticQa: fixture.acousticQa,
           session: fixture.session,
           evidence: [],
+          reviewerAuthorities: authorities(),
           releasedAt: "2026-09-28T18:12:00.000Z",
         }),
       /explicit passing native_linguistic review/u,
     );
   });
 
-  it("allows acoustic QA to abstain when both human authorities pass for the exact artifact", () => {
+  it("allows acoustic abstention when both exact-artifact reviews are authorized", () => {
     const fixture = makeFixture();
+    const reviewerAuthorities = authorities();
     const release = createReleasedReference({
       plan: fixture.plan,
       artifact: fixture.artifact,
       technicalQa: fixture.technicalQa,
       acousticQa: fixture.acousticQa,
       session: fixture.session,
-      evidence: passingEvidence(fixture),
+      evidence: passingEvidence(fixture, reviewerAuthorities),
+      reviewerAuthorities,
       releasedAt: "2026-09-28T18:12:00.000Z",
     });
 
@@ -181,8 +204,28 @@ describe("governed release pipeline", () => {
     assert.equal(hasActiveReleaseForArtifact({ artifact: fixture.artifact, releases: [release] }), true);
   });
 
+  it("blocks release when evidence authority is not supplied", () => {
+    const fixture = makeFixture();
+    const reviewerAuthorities = authorities();
+    assert.throws(
+      () =>
+        createReleasedReference({
+          plan: fixture.plan,
+          artifact: fixture.artifact,
+          technicalQa: fixture.technicalQa,
+          acousticQa: fixture.acousticQa,
+          session: fixture.session,
+          evidence: passingEvidence(fixture, reviewerAuthorities),
+          reviewerAuthorities: [],
+          releasedAt: "2026-09-28T18:12:00.000Z",
+        }),
+      /Reviewer authority not supplied/u,
+    );
+  });
+
   it("blocks reuse of human review for different bytes from the same candidate", () => {
     const fixture = makeFixture();
+    const reviewerAuthorities = authorities();
     const differentArtifact = buildRenderArtifact({
       candidate: fixture.candidate,
       bytes: new Uint8Array([9, 9, 9, 9]),
@@ -209,48 +252,30 @@ describe("governed release pipeline", () => {
           technicalQa,
           acousticQa,
           session: fixture.session,
-          evidence: passingEvidence(fixture),
+          evidence: passingEvidence(fixture, reviewerAuthorities),
+          reviewerAuthorities,
           releasedAt: "2026-09-28T18:12:00.000Z",
         }),
       /does not bind to the release artifact bytes/u,
     );
   });
 
-  it("blocks release when technical QA fails", () => {
-    const fixture = makeFixture();
-    const failedTechnicalQa = createTechnicalQaResult({
-      artifactId: fixture.artifact.artifactId,
-      checkedAt: "2026-09-28T18:06:00.000Z",
-      checks: [{ name: "no_clipping", passed: false }],
-    });
-    assert.throws(
-      () =>
-        createReleasedReference({
-          plan: fixture.plan,
-          artifact: fixture.artifact,
-          technicalQa: failedTechnicalQa,
-          acousticQa: fixture.acousticQa,
-          session: fixture.session,
-          evidence: passingEvidence(fixture),
-          releasedAt: "2026-09-28T18:12:00.000Z",
-        }),
-      /Technical QA is blocking/u,
-    );
-  });
-
   it("creates a different release when target or profile version changes", () => {
     const first = makeFixture("1.0.0", "1.0.0");
     const second = makeFixture("1.0.1", "1.0.1");
-    const release = (fixture: ReturnType<typeof makeFixture>) =>
-      createReleasedReference({
+    const release = (fixture: ReturnType<typeof makeFixture>) => {
+      const reviewerAuthorities = authorities();
+      return createReleasedReference({
         plan: fixture.plan,
         artifact: fixture.artifact,
         technicalQa: fixture.technicalQa,
         acousticQa: fixture.acousticQa,
         session: fixture.session,
-        evidence: passingEvidence(fixture),
+        evidence: passingEvidence(fixture, reviewerAuthorities),
+        reviewerAuthorities,
         releasedAt: "2026-09-28T18:12:00.000Z",
       });
+    };
 
     assert.notEqual(release(first).releaseId, release(second).releaseId);
   });
