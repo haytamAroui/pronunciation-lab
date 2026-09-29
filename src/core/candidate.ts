@@ -11,11 +11,19 @@ function assertNonEmpty(value: string, label: string): void {
   if (!value.trim()) throw new Error(`${label} is required`);
 }
 
+function containsMarkupSyntax(value: string): boolean {
+  const normalized = value.normalize("NFC");
+  const hasTagLikeMarkup = /<\/?[A-Za-z][^>]*>|<![A-Za-z][^>]*>|<\?[A-Za-z][^>]*\?>/u.test(normalized);
+  const hasEntity = /&(?:#[0-9]+|#x[0-9A-Fa-f]+|[A-Za-z][A-Za-z0-9]+);/u.test(normalized);
+  return hasTagLikeMarkup || hasEntity;
+}
+
 function validateSpans(spans: readonly PronunciationSpan[], prefix: string): string[] {
   const issues: string[] = [];
   if (spans.length === 0) issues.push(`${prefix}_EMPTY`);
   for (const span of spans) {
     if (!span.text.normalize("NFC").trim()) issues.push(`${prefix}_TEXT_MISSING`);
+    if (containsMarkupSyntax(span.text)) issues.push(`${prefix}_TEXT_CONTAINS_MARKUP`);
     if (!span.phoneString.trim()) issues.push(`${prefix}_PHONE_STRING_MISSING`);
   }
   return issues;
@@ -39,6 +47,7 @@ export function validateCanonicalTarget(target: CanonicalPronunciationTarget): r
   if (!target.targetId.trim()) issues.push("TARGET_ID_MISSING");
   if (!target.locale.trim()) issues.push("TARGET_LOCALE_MISSING");
   if (!target.text.normalize("NFC").trim()) issues.push("TARGET_TEXT_MISSING");
+  if (containsMarkupSyntax(target.text)) issues.push("TARGET_TEXT_CONTAINS_MARKUP");
   if (target.canonicalIpa !== null && !target.canonicalIpa.trim()) {
     issues.push("TARGET_CANONICAL_IPA_EMPTY");
   }

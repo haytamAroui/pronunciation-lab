@@ -84,3 +84,71 @@ describe("candidate identity", () => {
     assert.ok(issues.includes("ARTIFACT_ID_MISMATCH"));
   });
 });
+
+
+describe("canonical target text safety", () => {
+  it("rejects tag-like speech markup and entities", () => {
+    const base = {
+      targetId: "test:markup",
+      locale: "nl-BE",
+      canonicalIpa: null,
+      role: "pronunciation_reference" as const,
+      metadata: Object.freeze({}),
+    };
+
+    assert.throws(
+      () =>
+        buildCandidate({
+          target: { ...base, text: "<break time='1000ms'/>is gelijk aan 200" },
+          renderer: {
+            kind: "tts",
+            provider: "edge_tts",
+            voiceId: "nl-BE-DenaNeural",
+            pronunciation: { mode: "provider_default" },
+            ratePercent: 0,
+            pitchPercent: 0,
+          },
+        }),
+      /TARGET_TEXT_CONTAINS_MARKUP/u,
+    );
+
+    assert.throws(
+      () =>
+        buildCandidate({
+          target: { ...base, text: "sok&nbsp;" },
+          renderer: {
+            kind: "tts",
+            provider: "edge_tts",
+            voiceId: "nl-BE-DenaNeural",
+            pronunciation: { mode: "provider_default" },
+            ratePercent: 0,
+            pitchPercent: 0,
+          },
+        }),
+      /TARGET_TEXT_CONTAINS_MARKUP/u,
+    );
+  });
+
+  it("allows ordinary mathematical less-than text", () => {
+    assert.doesNotThrow(() =>
+      buildCandidate({
+        target: {
+          targetId: "test:math",
+          locale: "nl-BE",
+          text: "3 < 5",
+          canonicalIpa: null,
+          role: "pronunciation_reference",
+          metadata: Object.freeze({}),
+        },
+        renderer: {
+          kind: "tts",
+          provider: "edge_tts",
+          voiceId: "nl-BE-DenaNeural",
+          pronunciation: { mode: "provider_default" },
+          ratePercent: 0,
+          pitchPercent: 0,
+        },
+      }),
+    );
+  });
+});
