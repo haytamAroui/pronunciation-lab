@@ -59,11 +59,14 @@ export function composeSpeechPracticePcmWav(input: {
   let totalFrames = 0;
   const eventLengths: number[] = [];
   for (const event of input.plan.timeline) {
-    const length =
-      event.kind === "render"
-        ? decoded.get(event.requestId)?.length
-        : Math.round((event.durationMs / 1000) * sampleRateHz);
-    if (length === undefined) throw new Error(`Timeline references unknown request ${event.requestId}`);
+    let length: number;
+    if (event.kind === "render") {
+      const source = decoded.get(event.requestId);
+      if (!source) throw new Error(`Timeline references unknown request ${event.requestId}`);
+      length = source.length;
+    } else {
+      length = Math.round((event.durationMs / 1000) * sampleRateHz);
+    }
     eventLengths.push(length);
     totalFrames += length;
   }
@@ -82,7 +85,8 @@ export function composeSpeechPracticePcmWav(input: {
     const length = eventLengths[eventIndex]!;
     const startFrame = cursor;
     if (event.kind === "render") {
-      const source = decoded.get(event.requestId)!;
+      const source = decoded.get(event.requestId);
+      if (!source) throw new Error(`Timeline references unknown request ${event.requestId}`);
       samples.set(source, cursor);
       cursor += source.length;
       boundaries.push({
