@@ -9,7 +9,6 @@ import {
   NL_BE_S_INITIAL_DRAFT_ITEMS,
   NL_BE_S_INITIAL_EXPERIMENT_ID,
   NL_BE_S_INITIAL_REVIEW_CHECKLIST,
-  SOUNDSTEPS_SOURCE_COMMIT,
   submitNlBeSInitialNativeTargetReview,
 } from "../src/index.js";
 
@@ -36,12 +35,17 @@ describe("nl-BE /s/ initial R1 experiment", () => {
     }
   });
 
-  it("pins six SoundSteps authored preview words to an exact repository commit", () => {
-    const imported = NL_BE_S_INITIAL_DRAFT_ITEMS.filter(
-      (item) => item.source === "soundsteps_authored_preview",
+  it("keeps six internal pilot seed words without product-repository coupling", () => {
+    const seeded = NL_BE_S_INITIAL_DRAFT_ITEMS.filter(
+      (item) => item.source === "pilot_seed",
     );
-    assert.deepEqual(imported.map((item) => item.text), ["sap", "sok", "soep", "sop", "suf", "som"]);
-    assert.equal(SOUNDSTEPS_SOURCE_COMMIT.length, 40);
+    assert.deepEqual(seeded.map((item) => item.text), ["sap", "sok", "soep", "sop", "suf", "som"]);
+    assert.ok(seeded.every((item) => item.sourceRefs.every((ref) => ref.startsWith("pilot-seed:"))));
+    assert.ok(
+      seeded.every((item) =>
+        item.sourceRefs.every((ref) => !ref.includes("soundsteps") && !ref.includes("github")),
+      ),
+    );
   });
 
   it("keeps all authoring entries draft until authorized native review exists", () => {
