@@ -1,3 +1,4 @@
+import type { PhoneticAlphabet } from "../core/model.js";
 import type {
   SpeechPracticeInputMode,
   SpeechPracticeRendererCapabilities,
@@ -35,6 +36,7 @@ const AZURE_UNIT_KINDS: readonly SpeechPracticeUnitKind[] = Object.freeze([
   "phrase",
   "sentence",
 ]);
+const AZURE_ALPHABETS: readonly PhoneticAlphabet[] = Object.freeze(["ipa"]);
 
 export const AZURE_SPEECH_PRACTICE_CAPABILITIES: SpeechPracticeRendererCapabilities =
   Object.freeze({
@@ -42,7 +44,7 @@ export const AZURE_SPEECH_PRACTICE_CAPABILITIES: SpeechPracticeRendererCapabilit
     rendererVersion: "azure-speech",
     supportedInputModes: AZURE_INPUT_MODES,
     supportedUnitKinds: AZURE_UNIT_KINDS,
-    supportedAlphabets: Object.freeze(["ipa"]),
+    supportedAlphabets: AZURE_ALPHABETS,
     rateControl: true,
     pitchControl: true,
     canReuseArtifact: true,
@@ -77,15 +79,15 @@ export function createLocalSpeechPracticeCapabilities(input: {
   ]);
   const supportedUnitKinds: readonly SpeechPracticeUnitKind[] =
     input.supportedUnitKinds ?? defaultUnitKinds;
+  const supportedAlphabets: readonly PhoneticAlphabet[] =
+    supportedInputModes.includes("ipa") ? Object.freeze(["ipa"]) : Object.freeze([]);
 
   return Object.freeze({
     rendererId: input.rendererId,
     rendererVersion: input.rendererVersion,
     supportedInputModes: Object.freeze([...supportedInputModes]),
     supportedUnitKinds: Object.freeze([...supportedUnitKinds]),
-    supportedAlphabets: Object.freeze(
-      supportedInputModes.includes("ipa") ? (["ipa"] as const) : ([] as const),
-    ),
+    supportedAlphabets,
     rateControl: input.rateControl ?? true,
     pitchControl: input.pitchControl ?? true,
     canReuseArtifact: input.canReuseArtifact ?? true,
