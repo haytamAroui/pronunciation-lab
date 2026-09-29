@@ -146,9 +146,15 @@ src/
   human/                 governed human-recording fallback
   experiment/            comparison matrices + nl-BE /s/ R1
   catalog/               consumer-neutral governed release catalog
-  consumer/              SoundSteps-specific release manifest
+  consumer/              optional downstream integration adapters
   metrics/               evidence-derived operational metrics
+packages/
+  speech-practice-engine/ reviewed articulation + motor-pattern intent (separate package)
 ```
+
+## Fingerprint compatibility
+
+Existing IDs and hash chains use the frozen `v1-localeCompare` canonicalization algorithm. It is intentionally not changed in place. See [Fingerprint Canonicalization V2 Migration Plan](docs/FINGERPRINT_V2_MIGRATION.md).
 
 ## Scope boundaries
 

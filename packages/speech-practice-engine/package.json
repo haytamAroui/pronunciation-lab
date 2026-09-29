@@ -13,13 +13,23 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "check": "npm run typecheck && npm test && npm run build"
   },
-  "engines": {"node": ">=22"},
-  "license": "UNLICENSED"
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "tsx": "^4.20.0",
+    "typescript": "~6.0.3"
+  }
 }

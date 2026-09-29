@@ -1,5 +1,16 @@
 import { createHash } from "node:crypto";
 
+/**
+ * Compatibility identifier for the canonicalization algorithm used by every
+ * existing fingerprint and hash-chained ledger event.
+ *
+ * IMPORTANT: v1 sorts object keys with String.localeCompare(). Do not change
+ * this implementation in place. A future deterministic comparator requires a
+ * versioned migration because changing canonical JSON changes every derived
+ * fingerprint, candidate ID, evidence ID, release ID, and ledger hash.
+ */
+export const FINGERPRINT_CANONICALIZATION_VERSION = "v1-localeCompare" as const;
+
 function stableValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stableValue);
   if (value && typeof value === "object") {
