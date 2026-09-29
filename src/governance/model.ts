@@ -10,6 +10,7 @@ export type TargetRegistryApproval =
       evidenceIds: readonly string[];
       approvedAt: string;
       reviewerRole: "native_linguistic";
+      reviewerAuthorityIds?: readonly string[];
     }>
   | Readonly<{
       status: "draft" | "retired";
@@ -67,6 +68,8 @@ export interface GovernedCandidatePlan {
   planFingerprint: string;
   targetId: string;
   targetRegistryVersion: string;
+  locale: string;
+  targetClass: string;
   renderingProfileId: string;
   renderingProfileVersion: string;
   renderer: RendererIdentity;

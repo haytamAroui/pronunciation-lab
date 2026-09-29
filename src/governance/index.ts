@@ -6,3 +6,4 @@ export * from "./plan.js";
 export * from "./rejection.js";
 export * from "./release.js";
 export * from "./ledger.js";
+export * from "./reviewerAuthority.js";

@@ -12,6 +12,11 @@ import type {
   ReleasedReference,
   TechnicalQaResult,
 } from "./model.js";
+import {
+  assertReviewerAuthorizedAt,
+  type ReviewerAuthorityRecord,
+  type ReviewerAuthorityRole,
+} from "./reviewerAuthority.js";
 
 const REQUIRED_HUMAN_ROLES = ["native_linguistic", "clinical"] as const;
 
@@ -46,6 +51,7 @@ export function createReleasedReference(input: {
   acousticQa: AcousticQaResult;
   session: BlindReviewSession;
   evidence: readonly CandidateReviewEvidence[];
+  reviewerAuthorities: readonly ReviewerAuthorityRecord[];
   releasedAt: string;
 }): ReleasedReference {
   if (!Number.isFinite(Date.parse(input.releasedAt))) {
@@ -70,6 +76,9 @@ export function createReleasedReference(input: {
     throw new Error("Technical QA is blocking and must pass before release");
   }
 
+  const authorityById = new Map(
+    input.reviewerAuthorities.map((authority) => [authority.authorityId, authority] as const),
+  );
   const humanEvidence = evidenceForCandidate({
     candidateId: input.plan.candidateId,
     session: input.session,
@@ -93,6 +102,25 @@ export function createReleasedReference(input: {
         `Human review evidence ${item.evidenceId} does not bind to the release artifact bytes`,
       );
     }
+
+    if (!item.reviewerAuthorityId) {
+      throw new Error(`Human review evidence ${item.evidenceId} lacks reviewer authority`);
+    }
+    const authority = authorityById.get(item.reviewerAuthorityId);
+    if (!authority) {
+      throw new Error(`Reviewer authority not supplied for evidence ${item.evidenceId}`);
+    }
+    if (item.reviewerRole !== "native_linguistic" && item.reviewerRole !== "clinical") {
+      throw new Error(`Unsupported governed reviewer role ${item.reviewerRole}`);
+    }
+    assertReviewerAuthorizedAt({
+      authority,
+      reviewerId: item.reviewerId,
+      role: item.reviewerRole as ReviewerAuthorityRole,
+      locale: input.plan.locale,
+      targetClass: input.plan.targetClass,
+      at: item.reviewedAt,
+    });
   }
 
   const roleEvidence = new Map<string, CandidateReviewEvidence[]>();

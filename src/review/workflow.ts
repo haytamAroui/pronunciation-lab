@@ -8,6 +8,10 @@ import type {
   AcousticQaResult,
   TechnicalQaResult,
 } from "../governance/model.js";
+import {
+  assertReviewerAuthorizedAt,
+  type ReviewerAuthorityRecord,
+} from "../governance/reviewerAuthority.js";
 import type { RejectionReason } from "../governance/rejection.js";
 import type { BlindReviewSession } from "./blindSession.js";
 import type {
@@ -40,6 +44,7 @@ export interface BlindReviewPacket {
     text: string;
     canonicalIpa: string | null;
     locale: string;
+    targetClass: string | null;
     cue: AuthoredTargetCue;
   }>;
   items: readonly Readonly<{
@@ -174,11 +179,13 @@ export function createBlindReviewPacket(input: {
     }),
   );
 
+  const metadataTargetClass = input.target.metadata.targetClass;
   const target = Object.freeze({
     targetId: input.target.targetId,
     text: input.target.text,
     canonicalIpa: input.target.canonicalIpa,
     locale: input.target.locale,
+    targetClass: typeof metadataTargetClass === "string" ? metadataTargetClass : null,
     cue: Object.freeze({ ...input.cue }),
   });
 
@@ -218,7 +225,7 @@ function validateOverallDecision(input: {
 function makeEvidence(input: {
   packet: BlindReviewPacket;
   blindLabel: string;
-  reviewerId: string;
+  reviewerAuthority: ReviewerAuthorityRecord;
   reviewedAt: string;
   role: GovernedReviewerRole;
   overallDecision: ReviewDecision;
@@ -227,13 +234,24 @@ function makeEvidence(input: {
   rejectionReason?: RejectionReason;
   note?: string;
 }): CandidateReviewEvidence {
-  requireText(input.reviewerId, "reviewerId");
   if (!Number.isFinite(Date.parse(input.reviewedAt))) {
     throw new Error("reviewedAt must be an ISO timestamp");
   }
   if (input.packet.reviewerRole !== input.role) {
     throw new Error("Review packet role does not match submission role");
   }
+
+  assertReviewerAuthorizedAt({
+    authority: input.reviewerAuthority,
+    reviewerId: input.reviewerAuthority.reviewerId,
+    role: input.role,
+    locale: input.packet.target.locale,
+    ...(input.packet.target.targetClass
+      ? { targetClass: input.packet.target.targetClass }
+      : {}),
+    at: input.reviewedAt,
+  });
+
   const item = input.packet.items.find((candidate) => candidate.blindLabel === input.blindLabel);
   if (!item) {
     throw new Error(`Unknown blind label: ${input.blindLabel}`);
@@ -244,7 +262,8 @@ function makeEvidence(input: {
     packetId: input.packet.packetId,
     blindLabel: input.blindLabel,
     artifactBindingFingerprint: item.reviewBindingFingerprint,
-    reviewerId: input.reviewerId,
+    reviewerId: input.reviewerAuthority.reviewerId,
+    reviewerAuthorityId: input.reviewerAuthority.authorityId,
     reviewedAt: input.reviewedAt,
     role: input.role,
     overallDecision: input.overallDecision,
@@ -260,8 +279,9 @@ function makeEvidence(input: {
     sessionId: input.packet.sessionId,
     blindLabel: input.blindLabel,
     artifactBindingFingerprint: item.reviewBindingFingerprint,
-    reviewerId: input.reviewerId,
+    reviewerId: input.reviewerAuthority.reviewerId,
     reviewerRole: input.role,
+    reviewerAuthorityId: input.reviewerAuthority.authorityId,
     reviewedAt: input.reviewedAt,
     dimensions: Object.freeze(input.dimensions.map((dimension) => Object.freeze({ ...dimension }))),
     criticalFlags: Object.freeze([...input.criticalFlags]),
@@ -272,7 +292,7 @@ function makeEvidence(input: {
 export function submitNativeLinguisticReview(input: {
   packet: BlindReviewPacket;
   blindLabel: string;
-  reviewerId: string;
+  reviewerAuthority: ReviewerAuthorityRecord;
   reviewedAt: string;
   submission: NativeLinguisticSubmission;
 }): CandidateReviewEvidence {
@@ -299,7 +319,7 @@ export function submitNativeLinguisticReview(input: {
   return makeEvidence({
     packet: input.packet,
     blindLabel: input.blindLabel,
-    reviewerId: input.reviewerId,
+    reviewerAuthority: input.reviewerAuthority,
     reviewedAt: input.reviewedAt,
     role: "native_linguistic",
     overallDecision: s.overallDecision,
@@ -318,7 +338,7 @@ export function submitNativeLinguisticReview(input: {
 export function submitClinicalSuitabilityReview(input: {
   packet: BlindReviewPacket;
   blindLabel: string;
-  reviewerId: string;
+  reviewerAuthority: ReviewerAuthorityRecord;
   reviewedAt: string;
   submission: ClinicalSuitabilitySubmission;
 }): CandidateReviewEvidence {
@@ -347,7 +367,7 @@ export function submitClinicalSuitabilityReview(input: {
   return makeEvidence({
     packet: input.packet,
     blindLabel: input.blindLabel,
-    reviewerId: input.reviewerId,
+    reviewerAuthority: input.reviewerAuthority,
     reviewedAt: input.reviewedAt,
     role: "clinical",
     overallDecision: s.overallDecision,

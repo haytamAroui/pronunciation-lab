@@ -267,51 +267,6 @@ export function createNlBeSInitialDraftRegistry(): readonly TargetRegistryRecord
   );
 }
 
-export function createReviewedNlBeSInitialTargetRecord(input: {
-  itemId: string;
-  canonicalIpa: string;
-  evidenceIds: readonly string[];
-  approvedAt: string;
-  registryVersion: string;
-}): TargetRegistryRecord {
-  const entry = NL_BE_S_INITIAL_DRAFT_ITEMS.find((candidate) => candidate.itemId === input.itemId);
-  if (!entry) throw new Error(`Unknown nl-BE /s/ initial experiment item: ${input.itemId}`);
-  if (!input.canonicalIpa.trim()) throw new Error("canonicalIpa is required");
-  if (input.evidenceIds.length === 0) {
-    throw new Error("Native-reviewed experiment targets require linguistic evidence IDs");
-  }
-
-  return createTargetRegistryRecord({
-    target: {
-      targetId: entry.itemId,
-      locale: "nl-BE",
-      text: entry.text,
-      canonicalIpa: input.canonicalIpa,
-      role: "pronunciation_reference",
-      metadata: Object.freeze({
-        experimentId: NL_BE_S_INITIAL_EXPERIMENT_ID,
-        targetPhoneme: "/s/",
-        wordPosition: "initial",
-        syllableRole: "onset",
-        clusterType: "singleton",
-        itemSource: entry.source,
-        referenceFollowingPhone: entry.referenceFollowingPhone,
-        referenceSyllableCount: entry.referenceSyllableCount,
-        ...(entry.soundStepsLexemeId
-          ? { soundStepsLexemeId: entry.soundStepsLexemeId }
-          : {}),
-      }),
-    },
-    registryVersion: input.registryVersion,
-    approval: {
-      status: "native_reviewed",
-      evidenceIds: input.evidenceIds,
-      approvedAt: input.approvedAt,
-      reviewerRole: "native_linguistic",
-    },
-  });
-}
-
 function assertExactReviewedSet(records: readonly TargetRegistryRecord[]): void {
   if (records.length !== NL_BE_S_INITIAL_DRAFT_ITEMS.length) {
     throw new Error(

@@ -73,6 +73,8 @@ export function createGovernedCandidatePlan(input: {
   const planFingerprint = fingerprint({
     targetId: input.targetRecord.target.targetId,
     targetRegistryVersion: input.targetRecord.registryVersion,
+    locale: input.targetRecord.target.locale,
+    targetClass: input.renderingProfile.targetClass,
     renderingProfileId: input.renderingProfile.profileId,
     renderingProfileVersion: input.renderingProfile.version,
     renderer: input.renderer,
@@ -87,6 +89,8 @@ export function createGovernedCandidatePlan(input: {
     planFingerprint,
     targetId: input.targetRecord.target.targetId,
     targetRegistryVersion: input.targetRecord.registryVersion,
+    locale: input.targetRecord.target.locale,
+    targetClass: input.renderingProfile.targetClass,
     renderingProfileId: input.renderingProfile.profileId,
     renderingProfileVersion: input.renderingProfile.version,
     renderer: Object.freeze({ ...input.renderer }),

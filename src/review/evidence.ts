@@ -12,13 +12,10 @@ export interface CandidateReviewEvidence {
   evidenceId: string;
   sessionId: string;
   blindLabel: string;
-  /**
-   * Opaque binding to the exact artifact bytes reviewed.
-   * Selection policy can operate without this field, but governed release requires it.
-   */
   artifactBindingFingerprint?: string;
   reviewerId: string;
   reviewerRole: string;
+  reviewerAuthorityId?: string;
   reviewedAt: string;
   dimensions: readonly {
     dimension: ReviewDimension;
@@ -45,6 +42,12 @@ export function validateReviewEvidence(evidence: CandidateReviewEvidence): reado
   }
   if (!evidence.reviewerId.trim()) issues.push("REVIEWER_ID_MISSING");
   if (!evidence.reviewerRole.trim()) issues.push("REVIEWER_ROLE_MISSING");
+  if (
+    evidence.reviewerAuthorityId !== undefined &&
+    !evidence.reviewerAuthorityId.trim()
+  ) {
+    issues.push("REVIEWER_AUTHORITY_ID_INVALID");
+  }
   if (!Number.isFinite(Date.parse(evidence.reviewedAt))) issues.push("REVIEWED_AT_INVALID");
   if (evidence.dimensions.length === 0) issues.push("DIMENSIONS_EMPTY");
 
