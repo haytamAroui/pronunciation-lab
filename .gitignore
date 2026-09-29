@@ -8,3 +8,5 @@ coverage/
 *.log
 .tmp/
 comparison_output/
+experiments/**/audio/
+experiments/**/run-manifest.local.json

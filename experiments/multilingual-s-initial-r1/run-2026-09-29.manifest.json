@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "experimentId": "multilingual-s-initial-r1",
+  "generator": {
+    "engine": "espeak",
+    "version": "eSpeak text-to-speech: 1.48.15  16.Apr.15  Data at: /usr/lib/x86_64-linux-gnu/espeak-data",
+    "speedWpm": 130,
+    "pitch": 50,
+    "amplitude": 100
+  },
+  "summary": {
+    "nl-BE": 6,
+    "fr-BE": 6,
+    "en-US": 6,
+    "ar": 6,
+    "total": 24,
+    "technicalQaPass": 24
+  },
+  "notes": [
+    "nl-BE uses the local eSpeak Dutch voice (nl), not a locale-specific Belgian Dutch voice.",
+    "fr-BE uses the local eSpeak french-Belgium voice.",
+    "en-US uses the local eSpeak english-us voice.",
+    "All files are experiment_only and unreviewed.",
+    "Arabic uses explicit eSpeak phoneme inputs rendered through the available Persian (fa) voice because this runtime has no Arabic voice. The phoneme sequence is target-directed, but the voice timbre/realization is still cross-locale and must not be treated as an Arabic reference model."
+  ],
+  "items": [
+    {"locale":"nl-BE","slug":"sap","text":"sap","voice":"nl","espeakIpaPreview":"sˈɑp","audioSha256":"sha256:02fc183a74cdacd1ffc1e95fb3f809556fb5a0e4916d803d6d80f52c571b312e","durationMs":390,"technicalQaPreview":{"status":"pass","rms":0.095685,"dcOffset":0.002442,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"nl-BE","slug":"sok","text":"sok","voice":"nl","espeakIpaPreview":"sˈɔk","audioSha256":"sha256:4716eea75530ed7c80ba913aa535a19251604bc6aaf6176d70c50889a7194142","durationMs":414,"technicalQaPreview":{"status":"pass","rms":0.093181,"dcOffset":0.002272,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"nl-BE","slug":"soep","text":"soep","voice":"nl","espeakIpaPreview":"sˈup","audioSha256":"sha256:5ee6f2c44df2d197111673a56801e2e6796785609f373d6be99748406238965b","durationMs":390,"technicalQaPreview":{"status":"pass","rms":0.081504,"dcOffset":0.002425,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"nl-BE","slug":"sop","text":"sop","voice":"nl","espeakIpaPreview":"sˈɔp","audioSha256":"sha256:2cdb03737c63631a603f21d060b62f0c18c07c1b7b83848b4b2f56462fb3bcc5","durationMs":379,"technicalQaPreview":{"status":"pass","rms":0.099449,"dcOffset":0.002502,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"nl-BE","slug":"suf","text":"suf","voice":"nl","espeakIpaPreview":"sˈɵf","audioSha256":"sha256:bf03e07f554d067836482e2184a00d4559f0f491d059bff91431ca4bd5eceac8","durationMs":450,"technicalQaPreview":{"status":"pass","rms":0.079338,"dcOffset":0.001948,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"nl-BE","slug":"som","text":"som","voice":"nl","espeakIpaPreview":"sˈɔm","audioSha256":"sha256:39713a6d404792effd76dd097b7521d4b733b247a114b6be15acc945503ed285","durationMs":489,"technicalQaPreview":{"status":"pass","rms":0.096385,"dcOffset":0.001758,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"fr-BE","slug":"sac","text":"sac","voice":"fr-be","espeakIpaPreview":"sˈak","audioSha256":"sha256:0bdac0d635cb8e926ba189f4ee8f0be713d205ed1481e70559069e77132c7d8b","durationMs":407,"technicalQaPreview":{"status":"pass","rms":0.087321,"dcOffset":0.001993,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"fr-BE","slug":"soupe","text":"soupe","voice":"fr-be","espeakIpaPreview":"sˈup","audioSha256":"sha256:a2c706418bd924d0c605f532ae226e2cf85944dffeedf48addb56954a622353e","durationMs":462,"technicalQaPreview":{"status":"pass","rms":0.052848,"dcOffset":0.002216,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"fr-BE","slug":"savon","text":"savon","voice":"fr-be","espeakIpaPreview":"savˈɔ̃","audioSha256":"sha256:2ed0a8697db8dca191c65aac96cfaed4c67f9ae048c7b1bd5c1eea772007f7b9","durationMs":580,"technicalQaPreview":{"status":"pass","rms":0.088392,"dcOffset":0.000591,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"fr-BE","slug":"soleil","text":"soleil","voice":"fr-be","espeakIpaPreview":"sɔlˈɛj","audioSha256":"sha256:9f0c187adadc9ea0beab24f38d3045986c377bd45cb70560ab57cf3cc6af1c5e","durationMs":594,"technicalQaPreview":{"status":"pass","rms":0.091979,"dcOffset":0.000618,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"fr-BE","slug":"souris","text":"souris","voice":"fr-be","espeakIpaPreview":"suʁˈi","audioSha256":"sha256:9ab22bbafc8780e6161d27be7ee186a72d1c062e088094ccba427f0287cdeff3","durationMs":519,"technicalQaPreview":{"status":"pass","rms":0.069368,"dcOffset":0.000693,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"fr-BE","slug":"salade","text":"salade","voice":"fr-be","espeakIpaPreview":"salˈad","audioSha256":"sha256:da28634d978aa3fbb26abc051e64b212b04bedc0455dcd55ab82b3ccaf047acf","durationMs":580,"technicalQaPreview":{"status":"pass","rms":0.094742,"dcOffset":0.00065,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"en-US","slug":"sock","text":"sock","voice":"en-us","espeakIpaPreview":"sˈɑːk","audioSha256":"sha256:bec579215e1dbce46714f4f6d61b07b7eb75eb186d40f68a8005f12b339dbfdc","durationMs":514,"technicalQaPreview":{"status":"pass","rms":0.095517,"dcOffset":0.002619,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"en-US","slug":"soup","text":"soup","voice":"en-us","espeakIpaPreview":"sˈuːp","audioSha256":"sha256:7c759f5ebc81329e203aae67f31e88898c244df0d098eb9935c261e5b6a5e725","durationMs":531,"technicalQaPreview":{"status":"pass","rms":0.073944,"dcOffset":0.003182,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"en-US","slug":"sun","text":"sun","voice":"en-us","espeakIpaPreview":"sˈʌn","audioSha256":"sha256:fd598159e20d1a8bb9494e4ab6f70ad4fd7f1f707f38ee55640db04981fa92e2","durationMs":522,"technicalQaPreview":{"status":"pass","rms":0.09903,"dcOffset":0.001625,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"en-US","slug":"soap","text":"soap","voice":"en-us","espeakIpaPreview":"sˈoʊp","audioSha256":"sha256:f8f8541be3d3b12a86254c902fec47a74ec34c8f11ca8099a218c4289426c850","durationMs":565,"technicalQaPreview":{"status":"pass","rms":0.076156,"dcOffset":0.002994,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"en-US","slug":"seal","text":"seal","voice":"en-us","espeakIpaPreview":"sˈiːl","audioSha256":"sha256:15c342cc60871ea623c7c3b8f11f91601f869462ecd90c7ae407b33f5bd949d0","durationMs":535,"technicalQaPreview":{"status":"pass","rms":0.076447,"dcOffset":0.001582,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"en-US","slug":"seven","text":"seven","voice":"en-us","espeakIpaPreview":"sˈɛvən","audioSha256":"sha256:20743beca692504ac7d8717134c2a2b98dd60d233972280e5df8a31337c3bed4","durationMs":615,"technicalQaPreview":{"status":"pass","rms":0.087437,"dcOffset":0.001414,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"ar","slug":"samak","text":"سَمَك","voice":"fa","rendererInput":"[[samak]]","targetIpaCandidate":"/samak/","espeakIpaPreview":"sˈamak","audioSha256":"sha256:412fa019f38df2966e09b873368274d1af89afc8bfc30fdb473085e6ddf64680","durationMs":534,"technicalQaPreview":{"status":"pass","rms":0.074513,"dcOffset":0.002526,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"ar","slug":"sariir","text":"سَرير","voice":"fa","rendererInput":"[[sa'Ri:R]]","targetIpaCandidate":"/saˈriːr/","espeakIpaPreview":"sarˈiːr","audioSha256":"sha256:5c3f2b1fdfb5f7433220a6649b2e359af8a3083cb86d1272406460697e971785","durationMs":848,"technicalQaPreview":{"status":"pass","rms":0.082874,"dcOffset":0.001047,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"ar","slug":"safiina","text":"سَفينة","voice":"fa","rendererInput":"[[sa'fi:na]]","targetIpaCandidate":"/saˈfiːna/","espeakIpaPreview":"safˈiːna","audioSha256":"sha256:2b95f0fd93d49e6903253beec90cd61e055b2c8e26ab1e9dc78dfaf37c253305","durationMs":831,"technicalQaPreview":{"status":"pass","rms":0.084976,"dcOffset":0.002023,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"ar","slug":"sukkar","text":"سُكَّر","voice":"fa","rendererInput":"[['suk:aR]]","targetIpaCandidate":"/ˈsukːar/","espeakIpaPreview":"sˈukːar","audioSha256":"sha256:6384ca766298948adfd1377f3e07fdb35722d22f49feca9da5d97370ad9f4dda","durationMs":778,"technicalQaPreview":{"status":"pass","rms":0.063983,"dcOffset":0.001658,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"ar","slug":"sayyaara","text":"سَيّارة","voice":"fa","rendererInput":"[[saj'ja:Ra]]","targetIpaCandidate":"/sajˈjaːra/","espeakIpaPreview":"sajjˈaːra","audioSha256":"sha256:dc8692d740ff0dcc3ffae12662ea9ed9183dfc91fbe6121564c70ffcd44426d9","durationMs":868,"technicalQaPreview":{"status":"pass","rms":0.08049,"dcOffset":0.001025,"clippedRatio":0.0,"boundaryPeak":0.0}},
+    {"locale":"ar","slug":"samaa","text":"سَماء","voice":"fa","rendererInput":"[[sa'ma:?]]","targetIpaCandidate":"/saˈmaːʔ/","espeakIpaPreview":"samˈaːʔ","audioSha256":"sha256:461a55f004cd566500b469f9d924929a5e1bb4a8637b40c170d13d8aad5e15ed","durationMs":679,"technicalQaPreview":{"status":"pass","rms":0.086428,"dcOffset":0.001236,"clippedRatio":0.0,"boundaryPeak":0.0}}
+  ]
+}
