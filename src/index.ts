@@ -9,7 +9,7 @@ export * from "./providers/azure/phoneticInventory.js";
 export * from "./providers/azure/lexicon.js";
 export * from "./providers/edge/edgeAdapter.js";
 export * from "./providers/edge/edgeCli.js";
-export * from "./experiment/comparisonMatrix.js";
+export * from "./experiment/index.js";
 export * from "./review/blindSession.js";
 export * from "./review/evidence.js";
 export * from "./review/workflow.js";
