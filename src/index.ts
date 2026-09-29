@@ -4,6 +4,7 @@ export * from "./core/candidate.js";
 export * from "./core/artifact.js";
 export * from "./authority/index.js";
 export * from "./phonemizers/index.js";
+export * from "./catalog/index.js";
 export * from "./providers/provider.js";
 export * from "./providers/azure/azureAdapter.js";
 export * from "./providers/azure/azureClient.js";

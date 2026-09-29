@@ -2,7 +2,7 @@
   "name": "@haytamaroui/pronunciation-lab",
   "version": "0.1.1",
   "private": false,
-  "description": "Provider-neutral pronunciation rendering, benchmarking, blind review, and evidence tooling.",
+  "description": "Provider-neutral pronunciation rendering, multilingual authority, blind review, and evidence tooling.",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -15,6 +15,18 @@
     "./core": {
       "types": "./dist/core/index.d.ts",
       "import": "./dist/core/index.js"
+    },
+    "./authority": {
+      "types": "./dist/authority/index.d.ts",
+      "import": "./dist/authority/index.js"
+    },
+    "./phonemizers": {
+      "types": "./dist/phonemizers/index.d.ts",
+      "import": "./dist/phonemizers/index.js"
+    },
+    "./catalog": {
+      "types": "./dist/catalog/index.d.ts",
+      "import": "./dist/catalog/index.js"
     },
     "./azure": {
       "types": "./dist/providers/azure/index.d.ts",
