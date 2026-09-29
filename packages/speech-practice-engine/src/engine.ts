@@ -1,9 +1,12 @@
 import { createHash } from "node:crypto";
 import type {
+  AuthoredSyllableStructure,
   CanonicalPronunciationTargetDraft,
   PracticeIntentUnit,
   ReviewedArticulationProfile,
   SpeechPracticeIntent,
+  SyllableCountClass,
+  SyllableCoverage,
 } from "./model.js";
 
 function id(prefix: string, value: unknown): string {
@@ -13,6 +16,52 @@ function id(prefix: string, value: unknown): string {
 
 function nonEmpty(value: string, label: string): void {
   if (!value.normalize("NFC").trim()) throw new Error(`${label} is required`);
+}
+
+export function classifySyllableCount(count: number): SyllableCountClass {
+  if (!Number.isInteger(count) || count < 1) {
+    throw new Error("syllable count must be a positive integer");
+  }
+  if (count === 1) return "monosyllable";
+  if (count === 2) return "disyllable";
+  if (count === 3) return "trisyllable";
+  return "polysyllable";
+}
+
+function normalizeSyllableStructure(
+  structure: AuthoredSyllableStructure,
+): AuthoredSyllableStructure {
+  const syllableClass = classifySyllableCount(structure.count);
+  void syllableClass;
+
+  if (structure.syllables) {
+    if (structure.syllables.length !== structure.count) {
+      throw new Error("SYLLABLE_SEGMENT_COUNT_MISMATCH");
+    }
+    for (const syllable of structure.syllables) {
+      nonEmpty(syllable, "syllable");
+    }
+  }
+
+  if (
+    structure.stressSyllableIndex !== undefined &&
+    structure.stressSyllableIndex !== null &&
+    (!Number.isInteger(structure.stressSyllableIndex) ||
+      structure.stressSyllableIndex < 0 ||
+      structure.stressSyllableIndex >= structure.count)
+  ) {
+    throw new Error("STRESS_SYLLABLE_INDEX_OUT_OF_RANGE");
+  }
+
+  return Object.freeze({
+    count: structure.count,
+    ...(structure.syllables
+      ? { syllables: Object.freeze(structure.syllables.map((value) => value.normalize("NFC").trim())) }
+      : {}),
+    ...(structure.stressSyllableIndex !== undefined
+      ? { stressSyllableIndex: structure.stressSyllableIndex }
+      : {}),
+  });
 }
 
 function validateUnit(unit: PracticeIntentUnit, profile: ReviewedArticulationProfile): void {
@@ -28,6 +77,10 @@ function validateUnit(unit: PracticeIntentUnit, profile: ReviewedArticulationPro
   if (unit.action === "sustain" && profile.continuity !== "sustainable") {
     throw new Error(`SUSTAIN_NOT_ALLOWED_FOR_PROFILE:${profile.profileId}`);
   }
+  if (unit.action === "lexical" && !unit.syllableStructure) {
+    throw new Error(`LEXICAL_UNIT_REQUIRES_AUTHORED_SYLLABLE_STRUCTURE:${unit.unitId}`);
+  }
+  if (unit.syllableStructure) normalizeSyllableStructure(unit.syllableStructure);
 }
 
 export function createReviewedArticulationProfile(
@@ -89,6 +142,9 @@ export function createSpeechPracticeIntent(input: {
       ...unit,
       displayText: unit.displayText.normalize("NFC"),
       ipa: unit.ipa.trim(),
+      ...(unit.syllableStructure
+        ? { syllableStructure: normalizeSyllableStructure(unit.syllableStructure) }
+        : {}),
       ...(unit.metadata ? { metadata: Object.freeze({ ...unit.metadata }) } : {}),
     });
   });
@@ -104,6 +160,7 @@ export function createSpeechPracticeIntent(input: {
       ipa: unit.ipa,
       repetitions: unit.repetitions,
       pauseMs: unit.pauseMs,
+      syllableStructure: unit.syllableStructure ?? null,
       metadata: unit.metadata ?? null,
     })),
   };
@@ -119,6 +176,27 @@ export function createSpeechPracticeIntent(input: {
   });
 }
 
+export function summarizeLexicalSyllableCoverage(
+  intent: SpeechPracticeIntent,
+): Readonly<SyllableCoverage> {
+  const coverage: SyllableCoverage = {
+    monosyllable: 0,
+    disyllable: 0,
+    trisyllable: 0,
+    polysyllable: 0,
+  };
+
+  for (const unit of intent.units) {
+    if (unit.action !== "lexical") continue;
+    if (!unit.syllableStructure) {
+      throw new Error(`LEXICAL_UNIT_REQUIRES_AUTHORED_SYLLABLE_STRUCTURE:${unit.unitId}`);
+    }
+    coverage[classifySyllableCount(unit.syllableStructure.count)] += 1;
+  }
+
+  return Object.freeze({ ...coverage });
+}
+
 export function emitCanonicalPronunciationTargetDrafts(input: {
   profile: ReviewedArticulationProfile;
   intent: SpeechPracticeIntent;
@@ -131,8 +209,16 @@ export function emitCanonicalPronunciationTargetDrafts(input: {
   }
 
   return Object.freeze(
-    input.intent.units.map((unit) =>
-      Object.freeze({
+    input.intent.units.map((unit) => {
+      const syllableCount = unit.syllableStructure?.count ?? null;
+      const syllableClass =
+        unit.syllableStructure !== undefined
+          ? classifySyllableCount(unit.syllableStructure.count)
+          : null;
+      const stressSyllableIndex =
+        unit.syllableStructure?.stressSyllableIndex ?? null;
+
+      return Object.freeze({
         targetId: `practice:${input.intent.intentId}:${unit.unitId}`,
         locale: input.intent.locale,
         text: unit.displayText,
@@ -146,9 +232,12 @@ export function emitCanonicalPronunciationTargetDrafts(input: {
           motorAction: unit.action,
           repetitions: unit.repetitions,
           pauseMs: unit.pauseMs,
+          syllableCount,
+          syllableClass,
+          stressSyllableIndex,
           practiceAuthority: "draft_requires_pronunciation_lab_review",
         }),
-      }),
-    ),
+      });
+    }),
   );
 }

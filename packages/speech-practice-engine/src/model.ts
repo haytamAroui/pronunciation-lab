@@ -14,6 +14,26 @@ export type MotorContinuity =
   | "closure_release"
   | "context_dependent";
 
+export type SyllableCountClass =
+  | "monosyllable"
+  | "disyllable"
+  | "trisyllable"
+  | "polysyllable";
+
+export interface AuthoredSyllableStructure {
+  count: number;
+  /**
+   * Optional authored segmentation. This is evidence-bearing content, not a
+   * spelling-derived syllabifier. When present its length must equal count.
+   */
+  syllables?: readonly string[];
+  /**
+   * Zero-based stressed-syllable index when the target language/item has an
+   * authored lexical stress value. Null means explicitly not supplied.
+   */
+  stressSyllableIndex?: number | null;
+}
+
 export interface ReviewedArticulationProfile {
   schemaVersion: "1.0.0";
   profileId: string;
@@ -45,6 +65,7 @@ export interface PracticeIntentUnit {
   ipa: string;
   repetitions: number;
   pauseMs: number;
+  syllableStructure?: AuthoredSyllableStructure;
   metadata?: Readonly<Record<string, string | number | boolean | null>>;
 }
 
@@ -56,6 +77,13 @@ export interface SpeechPracticeIntent {
   profileId: string;
   units: readonly PracticeIntentUnit[];
   authority: "authored_practice_intent";
+}
+
+export interface SyllableCoverage {
+  monosyllable: number;
+  disyllable: number;
+  trisyllable: number;
+  polysyllable: number;
 }
 
 export interface CanonicalPronunciationTargetDraft {
