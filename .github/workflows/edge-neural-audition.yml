@@ -1,0 +1,62 @@
+name: Edge Neural Voice Audition
+
+on:
+  push:
+    branches:
+      - feature/multilingual-pronunciation-authority-r2
+    paths:
+      - .github/workflows/edge-neural-audition.yml
+      - scripts/generate-edge-neural-audition.mjs
+      - experiments/edge-neural-audition-r1/config.json
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: ${{ !contains(github.event.head_commit.message, '[edge-artifacts]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Edge TTS
+        run: python -m pip install --disable-pip-version-check edge-tts
+
+      - name: Verify ffmpeg
+        run: ffmpeg -version | head -n 1
+
+      - name: Generate native neural audition
+        run: node scripts/generate-edge-neural-audition.mjs
+
+      - name: Upload audition artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: edge-neural-audition-r1
+          path: |
+            experiments/edge-neural-audition-r1/audio
+            experiments/edge-neural-audition-r1/run-manifest.json
+          if-no-files-found: error
+
+      - name: Commit exact generated artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f experiments/edge-neural-audition-r1/audio
+          git add experiments/edge-neural-audition-r1/run-manifest.json
+          if git diff --cached --quiet; then
+            echo "No generated artifact changes"
+            exit 0
+          fi
+          git commit -m "[edge-artifacts] generate Edge neural audition R1"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

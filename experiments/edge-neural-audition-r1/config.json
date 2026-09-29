@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "experimentId": "edge-neural-audition-r1",
+  "rate": "+0%",
+  "pitch": "+0Hz",
+  "volume": "+0%",
+  "outputSampleRate": 24000,
+  "packs": [
+    {
+      "locale": "nl-BE",
+      "voice": "nl-BE-DenaNeural",
+      "items": [
+        {"slug":"sok","text":"sok"},
+        {"slug":"soep","text":"soep"},
+        {"slug":"sap","text":"sap"}
+      ]
+    },
+    {
+      "locale": "fr-BE",
+      "voice": "fr-BE-CharlineNeural",
+      "items": [
+        {"slug":"sac","text":"sac"},
+        {"slug":"soupe","text":"soupe"},
+        {"slug":"souris","text":"souris"}
+      ]
+    },
+    {
+      "locale": "en-US",
+      "voice": "en-US-AnaNeural",
+      "items": [
+        {"slug":"sock","text":"sock"},
+        {"slug":"soup","text":"soup"},
+        {"slug":"seven","text":"seven"}
+      ]
+    },
+    {
+      "locale": "ar-SA",
+      "voice": "ar-SA-ZariyahNeural",
+      "items": [
+        {"slug":"samak","text":"سَمَك"},
+        {"slug":"sariir","text":"سَرير"},
+        {"slug":"sukkar","text":"سُكَّر"}
+      ]
+    }
+  ]
+}
