@@ -33,8 +33,11 @@ jobs:
       - name: Install Edge TTS
         run: python -m pip install --disable-pip-version-check edge-tts
 
-      - name: Verify ffmpeg
-        run: ffmpeg -version | head -n 1
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version | head -n 1
 
       - name: Generate native neural audition
         run: node scripts/generate-edge-neural-audition.mjs
