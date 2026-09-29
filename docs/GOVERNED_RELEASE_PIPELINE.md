@@ -14,6 +14,7 @@
 8. Human recordings do not bypass QA or human review.
 9. SoundSteps export only includes explicit active releases and records the exact release-ledger head.
 10. SoundSteps must still verify the actual bundled WAV SHA-256.
+11. Operational rates always expose their numerator and denominator; no-observation rates are `null`.
 
 ## Implemented flow
 
@@ -27,23 +28,31 @@ Target Registry
   -> Acoustic QA (advisory / abstain)
   -> Blind Native-Linguistic Review (exact artifact binding)
   -> Blind Clinical Review (exact artifact binding)
+  -> Selection / Human Recording Escalation if needed
   -> ReleasedReference
   -> Append-only Release Ledger
   -> SoundSteps Consumer Manifest
   -> SoundSteps runtime release registry
   -> exact bundled-WAV hash check
-```
 
-Synthetic candidates that all fail complete human review can escalate into the protocol-bound human-recording path, which then re-enters the same governed QA/review/release pipeline.
+Governed evidence + ledgers
+  -> Operational Metrics Snapshot
+  -> explicit numerators / denominators / null when no data
+```
 
 See:
 
 - [ACOUSTIC_QA_R1.md](./ACOUSTIC_QA_R1.md)
 - [HUMAN_RECORDING_FALLBACK.md](./HUMAN_RECORDING_FALLBACK.md)
 - [SOUNDSTEPS_RELEASE_MANIFEST.md](./SOUNDSTEPS_RELEASE_MANIFEST.md)
+- [OPERATIONAL_METRICS_R1.md](./OPERATIONAL_METRICS_R1.md)
 
-## Remaining R1 work
+## Remaining evidence work
 
-- operational measurement counters for technical rejection, acoustic flags, linguistic rejection, clinical rejection, and human-recording escalation;
-- native-reviewed `nl-BE /s/ initial` experiment data;
-- acoustic threshold calibration from real reviewed evidence before adding more phoneme classes.
+The R1 architecture is now implemented. The next work is empirical rather than another broad architecture layer:
+
+- author and native-review the narrow `nl-BE /s/ initial` experiment set;
+- run real candidate artifacts through the full governed pipeline;
+- compare acoustic observations against blind linguistic and clinical decisions;
+- calibrate acoustic thresholds from those results;
+- only then consider additional target classes or phoneme families.

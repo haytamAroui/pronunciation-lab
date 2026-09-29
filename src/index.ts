@@ -18,3 +18,4 @@ export * from "./governance/index.js";
 export * from "./qa/index.js";
 export * from "./human/index.js";
 export * from "./consumer/index.js";
+export * from "./metrics/index.js";

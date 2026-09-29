@@ -55,6 +55,10 @@
     "./consumer/soundsteps": {
       "types": "./dist/consumer/soundsteps.d.ts",
       "import": "./dist/consumer/soundsteps.js"
+    },
+    "./metrics": {
+      "types": "./dist/metrics/index.d.ts",
+      "import": "./dist/metrics/index.js"
     }
   },
   "files": [
