@@ -1,59 +1,12 @@
 # Pronunciation Lab
 
-Provider-neutral pronunciation rendering, benchmarking, blind review, and evidence tooling.
+Provider-neutral pronunciation rendering, multilingual pronunciation authority, benchmarking, blind review, and evidence tooling.
 
-Pronunciation Lab sits **above** speech-synthesis providers. It keeps linguistic targets independent from any provider, plans comparable render candidates, fingerprints exact configurations and artifacts, blinds candidates for human evaluation, and records evidence without allowing a synthesis provider or CI job to grant linguistic or clinical authority.
+Pronunciation Lab sits **above** speech-synthesis providers and **below** consuming products such as SoundSteps or Niveli. It can now manage sourced pronunciation evidence, contested readings, proposal-only English/Arabic phonemization, controlled render candidates, exact artifact provenance, human review, and governed release catalogs without allowing a provider, phonemizer, LLM, or CI job to grant linguistic or clinical authority.
 
-## Package status
+## Core invariant
 
-The repository is now structured as the npm package:
-
-```text
-@haytamaroui/pronunciation-lab
-```
-
-It is **npm-ready but not published to the public npm registry yet**. The GitHub repository remains the source of truth.
-
-For an authenticated private-GitHub environment, another project can install it directly from this repository:
-
-```bash
-npm install github:haytamAroui/pronunciation-lab
-```
-
-The package has a `prepare` hook, so Git installs compile `src/` into `dist/` automatically.
-
-When a tagged release is created, consumers should pin it instead of following `main`, for example:
-
-```bash
-npm install github:haytamAroui/pronunciation-lab#v0.1.0
-```
-
-A later public-registry release can use the same package name without changing consumer imports.
-
-## Imports
-
-Use the root package when broad access is convenient:
-
-```ts
-import {
-  buildCandidate,
-  createBlindSession,
-  createMicrosoftComparisonMatrix,
-} from "@haytamaroui/pronunciation-lab";
-```
-
-Or use stable subpath exports so applications only depend on the layer they need:
-
-```ts
-import { buildCandidate } from "@haytamaroui/pronunciation-lab/core";
-import { AzureSpeechAdapter } from "@haytamaroui/pronunciation-lab/azure";
-import { EdgeTtsAdapter } from "@haytamaroui/pronunciation-lab/edge";
-import { createBlindSession } from "@haytamaroui/pronunciation-lab/review";
-import { createMicrosoftComparisonMatrix } from "@haytamaroui/pronunciation-lab/experiment";
-import { selectCandidate } from "@haytamaroui/pronunciation-lab/policy";
-```
-
-## Why this exists
+> **Machines filter and propose. Humans approve.**
 
 A normal TTS integration answers:
 
@@ -61,118 +14,161 @@ A normal TTS integration answers:
 text -> provider -> audio
 ```
 
-Pronunciation Lab answers a different question:
+Pronunciation Lab answers:
 
 ```text
-canonical pronunciation target
-  -> provider capabilities
-  -> controlled render candidates
-  -> immutable artifacts
-  -> blind human review
-  -> evidence-backed decision
+source evidence / phonemizer proposals
+        ↓
+native-linguistic reading adjudication
+        ↓
+canonical target
+        ↓
+renderer candidates
+        ↓
+immutable artifact + SHA-256
+        ↓
+technical QA
+        ↓
+advisory acoustic QA / abstention
+        ↓
+blind native-linguistic review
+        ↓
+blind clinical review
+        ↓
+governed release
+        ↓
+consumer catalog / SoundSteps manifest
 ```
 
-The project is intentionally application-neutral. Speech-practice products, language-learning apps, dictionaries, accessibility pipelines, education tools, and research projects can define their own release policy on top.
+## Package
 
-## Core rules
+```text
+@haytamaroui/pronunciation-lab
+```
 
-1. **The provider is never linguistic authority.** Canonical pronunciation remains application-owned input.
-2. **Provider capabilities are explicit.** An adapter cannot claim IPA, lexicon, rate, or other controls it does not support.
-3. **Rendering identity is immutable.** Provider, voice, locale, pronunciation mode, phone string, rate, and other material inputs are fingerprinted.
-4. **Artifacts are evidence, not approval.** Successful synthesis proves only that synthesis succeeded.
-5. **Blind review hides configuration.** Reviewers evaluate candidate audio without seeing provider, voice, rate, or pronunciation mode.
-6. **No forced winner.** An experiment may conclude that no synthetic candidate is acceptable and require a human recording.
-7. **Policies live above the core.** A clinical product can require stricter review than a general language-learning product without changing the engine.
+The package is npm-ready but is not published to the public registry yet.
 
-## Initial provider model
+Install from GitHub:
 
-| Capability | Azure Speech | Edge TTS |
-| --- | ---: | ---: |
-| Provider-default pronunciation | yes | yes |
-| Rate control | yes, percent | yes, percent |
-| Generic package pitch control | yes, percent | neutral only (`0%` -> CLI `+0Hz`) |
-| Native provider pitch control | provider SSML | Edge CLI uses Hz; non-zero generic percent pitch fails closed |
-| Inline IPA planning | yes | no |
-| Reviewed provider mapping | yes | no |
-| Provider lexicon planning | yes | no |
-| Official provider API path | yes | no — optional local `edge-tts` CLI integration |
+```bash
+npm install github:haytamAroui/pronunciation-lab
+```
 
-Edge is deliberately modeled as a **default/prosody renderer**, not as an IPA renderer. The generic renderer currently represents pitch as a percentage, while the `edge-tts` CLI represents pitch as a frequency offset in Hz. Pronunciation Lab therefore maps only neutral generic pitch (`0%`) to `+0Hz` and rejects non-zero generic percent pitch rather than silently changing units. A future provider-specific Edge option can expose native Hz pitch explicitly.
+## Stable subpath exports
 
-Azure exposes richer pronunciation controls through its official Speech API. A consuming application can also compare or ingest human recordings as independent evidence without letting them redefine the canonical target.
+```ts
+import { buildCandidate } from "@haytamaroui/pronunciation-lab/core";
+import {
+  createPronunciationSourceEvidence,
+  adjudicatePronunciationReadings,
+} from "@haytamaroui/pronunciation-lab/authority";
+import {
+  phonemizeArabicMsaWord,
+  phonemizeEnglishWordFromArpabet,
+} from "@haytamaroui/pronunciation-lab/phonemizers";
+import {
+  createReleasedPronunciationCatalog,
+  searchReleasedPronunciationCatalog,
+} from "@haytamaroui/pronunciation-lab/catalog";
+import { AzureSpeechAdapter } from "@haytamaroui/pronunciation-lab/azure";
+import { EdgeTtsAdapter } from "@haytamaroui/pronunciation-lab/edge";
+import { createBlindSession } from "@haytamaroui/pronunciation-lab/review";
+```
+
+## Multilingual authority
+
+Pronunciation sources are evidence, not truth.
+
+`PronunciationSourceEvidence` can represent an official source, dictionary, linguistic reference, corpus, native reviewer, community usage, or another source. Multiple readings can be preserved and explicitly adjudicated as canonical, accepted variants, contested, or unresolved.
+
+Only an authorized native-linguistic adjudication may create a canonical target registry record.
+
+## Proposal-only phonemizers
+
+### English
+
+The English adapter accepts a deployment-supplied CMU/ARPAbet-style dictionary, preserves alternate entries, converts common phones to approximate IPA, and abstains when the word or phone inventory is unsupported.
+
+No external English dictionary is bundled, so the consuming deployment controls licensing and source provenance.
+
+### Arabic
+
+The Arabic MSA adapter is a fresh conservative rule engine for diacritized Arabic. It supports core consonants/vowels, long vowels, tanwin, shadda, sukun, alif maqsura, dagger alif, and sun/moon definite-article behavior.
+
+Unvocalized or context-dependent forms become `partial` or `abstain`; they are never silently promoted.
+
+
+## Companion speech-practice package
+
+The repository also contains `packages/speech-practice-engine`, a separate companion package for reviewed articulation profiles and authored motor-pattern intent. It is intentionally **not** exported from `@haytamaroui/pronunciation-lab` and does not choose providers or release audio.
+
+The dependency direction remains:
+
+```text
+application -> speech-practice-engine -> pronunciation-lab
+```
+
+Pronunciation Lab continues to own rendering candidates, artifact integrity, QA, blind review, and governed release.
+
+## Governed release
+
+Released references still require:
+
+1. a native-reviewed target;
+2. renderer eligibility;
+3. immutable artifact bytes;
+4. passing technical QA;
+5. advisory acoustic QA that may abstain;
+6. exact-artifact blind native-linguistic review;
+7. exact-artifact blind clinical review;
+8. authorized reviewer records;
+9. append-only release provenance.
+
+Human recordings use the same gates as TTS candidates.
+
+## Consumer catalog
+
+The generic release catalog exposes active approved pronunciation references with their locale, canonical IPA, exact artifact SHA-256, renderer identity, human evidence IDs, and optional reading-set provenance.
+
+The same catalog can feed a CLI, MCP server, API, website, SoundSteps, Niveli, or another product without duplicating pronunciation authority.
 
 ## Repository layout
 
 ```text
 src/
-  core/                 canonical targets, candidates, fingerprints, artifacts
-  providers/
-    azure/               Azure planning + official REST materialization
-    edge/                Edge capability model + optional local CLI materialization
-  experiment/            reusable comparison matrices
-  review/                blind sessions and review evidence
-  policy/                generic evidence-based selection
-  index.ts
-
-examples/
-  provider-comparison.ts
-
-tests/
+  authority/             sourced readings, adjudication, TSV import/export
+  phonemizers/           proposal-only English ARPAbet + Arabic MSA
+  core/                  targets, candidates, fingerprints, artifacts
+  governance/            target registry, reviewer authority, release ledgers
+  providers/             Azure + Edge adapters
+  qa/                    PCM technical QA + /s/-initial acoustic evidence
+  review/                blind exact-artifact human review
+  human/                 governed human-recording fallback
+  experiment/            comparison matrices + nl-BE /s/ R1
+  catalog/               consumer-neutral governed release catalog
+  consumer/              optional downstream integration adapters
+  metrics/               evidence-derived operational metrics
+packages/
+  speech-practice-engine/ reviewed articulation + motor-pattern intent (separate package)
 ```
 
-## Minimal example
+## Fingerprint compatibility
 
-```ts
-import {
-  buildCandidate,
-  createBlindSession,
-  type CanonicalPronunciationTarget,
-} from "@haytamaroui/pronunciation-lab";
+Existing IDs and hash chains use the frozen `v1-localeCompare` canonicalization algorithm. It is intentionally not changed in place. See [Fingerprint Canonicalization V2 Migration Plan](docs/FINGERPRINT_V2_MIGRATION.md).
 
-const target: CanonicalPronunciationTarget = {
-  targetId: "demo:nl-BE:sok",
-  locale: "nl-BE",
-  text: "sok",
-  canonicalIpa: "/sɔk/",
-  role: "pronunciation_reference",
-  metadata: {},
-};
+## Scope boundaries
 
-const candidate = buildCandidate({
-  target,
-  renderer: {
-    kind: "tts",
-    provider: "azure_speech",
-    voiceId: "nl-BE-DenaNeural",
-    pronunciation: {
-      mode: "canonical_ipa",
-      phoneString: "sɔk",
-      alphabet: "ipa",
-    },
-    ratePercent: -8,
-    pitchPercent: 0,
-  },
-});
+Pronunciation Lab does **not**:
 
-const session = createBlindSession({
-  sessionId: "review-001",
-  createdAt: new Date().toISOString(),
-  candidateIds: [candidate.candidateId],
-});
-```
+- diagnose speech disorders;
+- select treatment;
+- let a phonemizer define canonical IPA by itself;
+- let an LLM or acoustic model approve pronunciation correctness;
+- treat waveform similarity as pronunciation correctness;
+- treat provider success as clinical suitability;
+- automatically approve child-facing audio.
 
-## Intended experiment flow
-
-```text
-1. consuming application exports canonical targets
-2. Pronunciation Lab plans candidates
-3. provider adapters materialize candidate audio
-4. artifact hashes bind exact output to exact candidate identity
-5. review session assigns blinded labels
-6. humans score linguistic correctness / naturalness / task suitability
-7. policy resolves preferred candidate, insufficient evidence, or human-required
-8. consuming application decides whether and how to promote that evidence
-```
+See [Multilingual Pronunciation Authority R2](docs/MULTILINGUAL_AUTHORITY_R2.md) and [Governed Release Pipeline R1](docs/GOVERNED_RELEASE_PIPELINE.md).
 
 ## Development
 
@@ -182,31 +178,8 @@ npm run typecheck
 npm test
 npm run build
 npm run pack:check
-npm run example
 ```
 
-`npm run pack:check` validates the files and metadata that would be included in an npm package without publishing anything.
+## License
 
-## Publishing boundary
-
-The package is currently versioned `0.1.0` and remains `UNLICENSED`. That is deliberate: no public open-source license has been chosen yet.
-
-Before a public npm release, decide the license and confirm ownership of the npm scope `@haytamaroui`. Public publication should be an explicit release action, not an automatic consequence of CI.
-
-## Scope boundary
-
-Pronunciation Lab does **not** diagnose speech disorders, select treatment, infer phonemes from spelling, or decide that audio is clinically safe. It supplies provider-neutral rendering and review evidence. The consuming application owns linguistic authoring, reviewer qualifications, clinical policy, and release decisions.
-
-## SoundSteps boundary
-
-SoundSteps can consume this package, but Pronunciation Lab must not import SoundSteps curriculum, child runtime, 53-module catalog, practice-road, or child-release concepts.
-
-```text
-SoundSteps
-    -> @haytamaroui/pronunciation-lab
-
-@haytamaroui/pronunciation-lab
-    -/-> SoundSteps
-```
-
-This keeps the pronunciation engine reusable by other projects.
+The package remains `UNLICENSED` until an explicit public license is chosen.

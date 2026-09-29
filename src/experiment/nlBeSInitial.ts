@@ -13,18 +13,14 @@ import {
 } from "./comparisonMatrix.js";
 
 export const NL_BE_S_INITIAL_EXPERIMENT_ID = "experiment:nl-BE:s:initial:r1" as const;
-export const SOUNDSTEPS_SOURCE_COMMIT =
-  "8bee4fb05146f69e8e69360e370f61bc30c68d4f" as const;
-
 export type NlBeSInitialItemSource =
-  | "soundsteps_authored_preview"
+  | "pilot_seed"
   | "external_reference_candidate";
 
 export interface NlBeSInitialExperimentItem {
   itemId: string;
   text: string;
   source: NlBeSInitialItemSource;
-  soundStepsLexemeId?: string;
   /** Review hint only. Never promoted automatically into canonical authority. */
   referenceIpaCandidate: string;
   referenceSyllableCount: number;
@@ -53,9 +49,7 @@ function item(input: Omit<NlBeSInitialExperimentItem, "targetPhoneme" | "wordPos
 /**
  * R1 authoring queue.
  *
- * The first six entries are copied from SoundSteps' current authored preview
- * lexemes at SOUNDSTEPS_SOURCE_COMMIT. The second six are external reference
- * candidates chosen to broaden following-vowel contexts.
+ * The first six entries are internal R1 seed words retained only as experiment inputs. The second six are external reference candidates chosen to broaden following-vowel contexts.
  *
  * NONE of these entries is native-approved merely by appearing here.
  */
@@ -64,80 +58,62 @@ export const NL_BE_S_INITIAL_DRAFT_ITEMS: readonly NlBeSInitialExperimentItem[] 
     item({
       itemId: "nl-BE:s-initial:sap",
       text: "sap",
-      source: "soundsteps_authored_preview",
-      soundStepsLexemeId: "nl-BE_sap",
+      source: "pilot_seed",
       referenceIpaCandidate: "/sɑp/",
       referenceSyllableCount: 1,
       referenceFollowingPhone: "ɑ",
-      sourceRefs: [
-        `soundsteps@${SOUNDSTEPS_SOURCE_COMMIT}:src/content/curriculumSchema.ts#nl-BE_sap`,
-      ],
-      contentNotes: "Existing SoundSteps singleton-onset preview word.",
+      sourceRefs: ["pilot-seed:sap"],
+      contentNotes: "R1 seed word; native review remains authoritative.",
     }),
     item({
       itemId: "nl-BE:s-initial:sok",
       text: "sok",
-      source: "soundsteps_authored_preview",
-      soundStepsLexemeId: "nl-BE_sok",
+      source: "pilot_seed",
       referenceIpaCandidate: "/sɔk/",
       referenceSyllableCount: 1,
       referenceFollowingPhone: "ɔ",
-      sourceRefs: [
-        `soundsteps@${SOUNDSTEPS_SOURCE_COMMIT}:src/content/curriculumSchema.ts#nl-BE_sok`,
-      ],
-      contentNotes: "Existing SoundSteps singleton-onset preview word and governed pilot anchor.",
+      sourceRefs: ["pilot-seed:sok"],
+      contentNotes: "R1 seed word and governed pilot anchor; native review remains authoritative.",
     }),
     item({
       itemId: "nl-BE:s-initial:soep",
       text: "soep",
-      source: "soundsteps_authored_preview",
-      soundStepsLexemeId: "nl-BE_soep",
+      source: "pilot_seed",
       referenceIpaCandidate: "/sup/",
       referenceSyllableCount: 1,
       referenceFollowingPhone: "u",
-      sourceRefs: [
-        `soundsteps@${SOUNDSTEPS_SOURCE_COMMIT}:src/content/curriculumSchema.ts#nl-BE_soep`,
-      ],
-      contentNotes: "Existing SoundSteps singleton-onset preview word.",
+      sourceRefs: ["pilot-seed:soep"],
+      contentNotes: "R1 seed word; native review remains authoritative.",
     }),
     item({
       itemId: "nl-BE:s-initial:sop",
       text: "sop",
-      source: "soundsteps_authored_preview",
-      soundStepsLexemeId: "nl-BE_sop",
+      source: "pilot_seed",
       referenceIpaCandidate: "/sɔp/",
       referenceSyllableCount: 1,
       referenceFollowingPhone: "ɔ",
-      sourceRefs: [
-        `soundsteps@${SOUNDSTEPS_SOURCE_COMMIT}:src/content/curriculumSchema.ts#nl-BE_sop`,
-      ],
-      contentNotes: "Existing SoundSteps singleton-onset preview word.",
+      sourceRefs: ["pilot-seed:sop"],
+      contentNotes: "R1 seed word; native review remains authoritative.",
     }),
     item({
       itemId: "nl-BE:s-initial:suf",
       text: "suf",
-      source: "soundsteps_authored_preview",
-      soundStepsLexemeId: "nl-BE_suf",
+      source: "pilot_seed",
       referenceIpaCandidate: "/sʏf/",
       referenceSyllableCount: 1,
       referenceFollowingPhone: "ʏ",
-      sourceRefs: [
-        `soundsteps@${SOUNDSTEPS_SOURCE_COMMIT}:src/content/curriculumSchema.ts#nl-BE_suf`,
-      ],
-      contentNotes: "Existing SoundSteps singleton-onset preview word.",
+      sourceRefs: ["pilot-seed:suf"],
+      contentNotes: "R1 seed word; native review remains authoritative.",
     }),
     item({
       itemId: "nl-BE:s-initial:som",
       text: "som",
-      source: "soundsteps_authored_preview",
-      soundStepsLexemeId: "nl-BE_som",
+      source: "pilot_seed",
       referenceIpaCandidate: "/sɔm/",
       referenceSyllableCount: 1,
       referenceFollowingPhone: "ɔ",
-      sourceRefs: [
-        `soundsteps@${SOUNDSTEPS_SOURCE_COMMIT}:src/content/curriculumSchema.ts#nl-BE_som`,
-      ],
-      contentNotes: "Existing SoundSteps singleton-onset preview word.",
+      sourceRefs: ["pilot-seed:som"],
+      contentNotes: "R1 seed word; native review remains authoritative.",
     }),
     item({
       itemId: "nl-BE:s-initial:saus",
@@ -228,8 +204,8 @@ export const NL_BE_S_INITIAL_RENDERING_PROFILE: RenderingProfile =
   });
 
 function draftReason(item: NlBeSInitialExperimentItem): string {
-  return item.source === "soundsteps_authored_preview"
-    ? "SoundSteps-authored preview content; native nl-BE target approval has not been imported as release authority."
+  return item.source === "pilot_seed"
+    ? "R1 pilot seed content only; native nl-BE target approval is still required before candidate generation."
     : "External pronunciation reference candidate only; native nl-BE review and child-content review are required before candidate generation.";
 }
 
@@ -252,9 +228,6 @@ export function createNlBeSInitialDraftRegistry(): readonly TargetRegistryRecord
             itemSource: entry.source,
             referenceFollowingPhone: entry.referenceFollowingPhone,
             referenceSyllableCount: entry.referenceSyllableCount,
-            ...(entry.soundStepsLexemeId
-              ? { soundStepsLexemeId: entry.soundStepsLexemeId }
-              : {}),
           }),
         },
         registryVersion: "0.1.0-draft",

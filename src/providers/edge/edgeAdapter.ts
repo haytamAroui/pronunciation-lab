@@ -9,10 +9,6 @@ export const EDGE_CAPABILITIES: ProviderCapabilities = Object.freeze({
   providerId: "edge_tts",
   providerDefault: true,
   rateControl: true,
-  // The package-level renderer models pitch in percent, while the edge-tts CLI
-  // accepts pitch in Hz. Until the generic model represents pitch units
-  // explicitly, non-zero pitch control must fail closed rather than silently
-  // reinterpreting a percentage as a frequency offset.
   pitchControl: false,
   inlineAlphabets: Object.freeze([]),
   reviewedProviderMapping: false,
@@ -61,14 +57,10 @@ export class EdgeTtsAdapter implements PronunciationProviderAdapter {
       payload: Object.freeze({
         executable: "edge-tts",
         args: Object.freeze([
-          "--voice",
-          renderer.voiceId,
-          "--text",
-          candidate.target.text,
-          "--rate",
-          signedPercent(renderer.ratePercent),
-          "--pitch",
-          "+0Hz",
+          `--voice=${renderer.voiceId}`,
+          `--text=${candidate.target.text}`,
+          `--rate=${signedPercent(renderer.ratePercent)}`,
+          "--pitch=+0Hz",
         ]),
       }),
     });

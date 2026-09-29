@@ -240,9 +240,6 @@ export function createReviewedNlBeSInitialTargetRecord(input: {
         followingPhone: input.reviewEvidence.followingPhone,
         syllableCount: input.reviewEvidence.syllableCount,
         stressIndex: input.reviewEvidence.stressIndex,
-        ...(item.soundStepsLexemeId
-          ? { soundStepsLexemeId: item.soundStepsLexemeId }
-          : {}),
       }),
     },
     registryVersion: input.registryVersion,

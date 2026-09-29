@@ -51,7 +51,7 @@ describe("provider capability boundaries", () => {
     assert.equal(plan.providerId, "edge_tts");
     const payload = plan.payload as { executable: string; args: readonly string[] };
     assert.equal(payload.executable, "edge-tts");
-    assert.deepEqual(payload.args.slice(-4), ["--rate", "+0%", "--pitch", "+0Hz"]);
+    assert.deepEqual(payload.args, ["--voice=nl-BE-DenaNeural", "--text=sok", "--rate=+0%", "--pitch=+0Hz"]);
   });
 
   it("fails closed when generic percent pitch is non-zero for Edge", () => {
@@ -89,4 +89,32 @@ describe("provider capability boundaries", () => {
       /EDGE_PRONUNCIATION_OVERRIDE_UNSUPPORTED/u,
     );
   });
+});
+
+
+describe("Edge CLI argument safety", () => {
+  for (const text of ["-h", "--rate=+90%"]) {
+    it(`binds hostile-looking target text as one --text= argument: ${text}`, () => {
+      const hostileTarget: CanonicalPronunciationTarget = Object.freeze({
+        ...target,
+        targetId: `test:edge:${text}`,
+        text,
+      });
+      const candidate = buildCandidate({
+        target: hostileTarget,
+        renderer: {
+          kind: "tts",
+          provider: "edge_tts",
+          voiceId: "nl-BE-DenaNeural",
+          pronunciation: { mode: "provider_default" },
+          ratePercent: 0,
+          pitchPercent: 0,
+        },
+      });
+      const plan = new EdgeTtsAdapter().plan({ target: hostileTarget, candidate });
+      const payload = plan.payload as { args: readonly string[] };
+      assert.ok(payload.args.includes(`--text=${text}`));
+      assert.equal(payload.args.includes(text), false);
+    });
+  }
 });

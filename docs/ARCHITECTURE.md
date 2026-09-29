@@ -106,6 +106,25 @@ The default policy is deliberately conservative:
 
 A non-clinical project should provide its own `SelectionPolicy` rather than weakening or reinterpreting evidence records.
 
+## Companion practice layer
+
+Articulation profiles, motor-pattern authoring, practice roads, repetition intent, and child-facing progression do **not** belong to the Pronunciation Lab root package.
+
+This repository contains a separate companion package at `packages/speech-practice-engine` to make that boundary executable. The companion package may emit canonical target drafts, but it does not select a renderer or approve audio.
+
+```text
+application / SoundSteps
+  -> speech-practice-engine
+  -> canonical target drafts
+  -> pronunciation-lab
+  -> provider candidates
+  -> QA
+  -> blind human review
+  -> governed release
+```
+
+The practice layer must not bypass Pronunciation Lab's target/review/release gates. A representable articulation or motor pattern is not automatically a clinically suitable reference.
+
 ## SoundSteps integration boundary
 
 SoundSteps should remain responsible for:
@@ -121,7 +140,7 @@ release predicates
 clinical product claims
 ```
 
-A thin SoundSteps adapter may export approved/candidate lexemes into Pronunciation Lab targets and later import artifact/review evidence back into the SoundSteps production control plane.
+A thin optional SoundSteps consumer adapter may export/import release records at the application boundary. Generic experiments and core authority models must not contain SoundSteps repository commits, lexeme IDs, or source-file paths.
 
 Pronunciation Lab must not import SoundSteps source files. Dependency direction is one-way:
 

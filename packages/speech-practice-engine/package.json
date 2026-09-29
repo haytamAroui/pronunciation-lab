@@ -1,0 +1,35 @@
+{
+  "name": "@haytamaroui/speech-practice-engine",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Provider-independent reviewed articulation profiles and authored motor-pattern intent for speech-practice applications.",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "tsx": "^4.20.0",
+    "typescript": "~6.0.3"
+  }
+}
