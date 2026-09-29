@@ -35,6 +35,30 @@
     "./policy": {
       "types": "./dist/policy/index.d.ts",
       "import": "./dist/policy/index.js"
+    },
+    "./governance": {
+      "types": "./dist/governance/index.d.ts",
+      "import": "./dist/governance/index.js"
+    },
+    "./qa": {
+      "types": "./dist/qa/index.d.ts",
+      "import": "./dist/qa/index.js"
+    },
+    "./human": {
+      "types": "./dist/human/index.d.ts",
+      "import": "./dist/human/index.js"
+    },
+    "./consumer": {
+      "types": "./dist/consumer/index.d.ts",
+      "import": "./dist/consumer/index.js"
+    },
+    "./consumer/soundsteps": {
+      "types": "./dist/consumer/soundsteps.d.ts",
+      "import": "./dist/consumer/soundsteps.js"
+    },
+    "./metrics": {
+      "types": "./dist/metrics/index.d.ts",
+      "import": "./dist/metrics/index.js"
     }
   },
   "files": [
